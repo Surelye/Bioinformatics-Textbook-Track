@@ -59,7 +59,8 @@ public class BA2A {
         return false;
     }
 
-    private static boolean appearsInEachStringWithAtMostDMismatches(String pattern, List<String> DNA, int d) {
+    private static boolean
+    appearsInEachStringWithAtMostDMismatches(String pattern, List<String> DNA, int d) {
         for (String text : DNA) {
             if (!appearsInStringWithAtMostDMismatches(pattern, text, d)) {
                 return false;

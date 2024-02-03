@@ -145,4 +145,21 @@ public class BA2UTIL {
 
         return randomKMers;
     }
+
+    public static double entropyScore(List<String> motifs) {
+        int motifLength = motifs.getFirst().length();
+        double[][] profile = formProfileWithPseudocounts(motifs);
+        double logBase2 = Math.log(2);
+        double entropyScore = 0D, rowScore;
+
+        for (int i = 0; i < motifLength; ++i) {
+            rowScore = 0D;
+            for (int j = 0; j < 4; ++j) {
+                rowScore += profile[j][i] * Math.log(profile[j][i]) / logBase2;
+            }
+            entropyScore += rowScore;
+        }
+
+        return -entropyScore;
+    }
 }
