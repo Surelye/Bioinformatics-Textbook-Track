@@ -84,7 +84,8 @@ public class BA1I {
         String text = sampleDataset.getFirst();
         List<Integer> intParams = UTIL.parseIntArray(sampleDataset.getLast());
 
-        return frequentWordsWithMismatchesMachinery(text, intParams.getFirst(), intParams.getLast());
+        return frequentWordsWithMismatchesMachinery(text, intParams.getFirst(),
+                intParams.getLast());
     }
 
     public static List<String> frequentWordsWithMismatches(String text, int k, int d) {

@@ -45,8 +45,8 @@ public class BA1F {
                         case 'A', 'T' -> 0;
                         case 'C' -> -1;
                         case 'G' -> 1;
-                        default -> throw new RuntimeException("Incorrect nucleotide %c at position %d"
-                                .formatted(genome.charAt(i), i));
+                        default -> throw new RuntimeException("Incorrect nucleotide: %c"
+                                .formatted(genome.charAt(i)));
                     };
         }
         int minSkew = Arrays

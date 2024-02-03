@@ -34,7 +34,8 @@ import java.util.List;
 
 public class BA1H {
 
-    private static List<Integer> approximatePatternMatchingMachinery(String pattern, String text, int d) {
+    private static List<Integer>
+    approximatePatternMatchingMachinery(String pattern, String text, int d) {
         int patternLength = pattern.length(),
                 textLength = text.length();
         List<Integer> positions = new ArrayList<>();

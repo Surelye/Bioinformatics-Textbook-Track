@@ -31,7 +31,8 @@ import java.util.*;
 
 public class BA1J {
 
-    private static List<String> frequentWordsWithMismatchesAndReverseComplementsMachinery(String text, int k, int d) {
+    private static List<String>
+    frequentWordsWithMismatchesAndReverseComplementsMachinery(String text, int k, int d) {
         int textLength = text.length();
         int numKMers = (int)Math.pow(4, k);
         int[] close = new int[numKMers];
@@ -71,8 +72,10 @@ public class BA1J {
         return frequentPatterns;
     }
 
-    public static List<String> frequentWordsWithMismatchesAndReverseComplements(String text, int k, int d) {
-        List<String> frequentKMers = frequentWordsWithMismatchesAndReverseComplementsMachinery(text, k, d);
+    public static List<String>
+    frequentWordsWithMismatchesAndReverseComplements(String text, int k, int d) {
+        List<String> frequentKMers =
+                frequentWordsWithMismatchesAndReverseComplementsMachinery(text, k, d);
         UTIL.writeToFile(frequentKMers);
 
         return frequentKMers;
@@ -83,6 +86,7 @@ public class BA1J {
         String text = sampleDataset.getFirst();
         List<Integer> intParams = UTIL.parseIntArray(sampleDataset.getLast());
 
-        return frequentWordsWithMismatchesAndReverseComplements(text, intParams.getFirst(), intParams.getLast());
+        return frequentWordsWithMismatchesAndReverseComplements(text, intParams.getFirst(),
+                intParams.getLast());
     }
 }

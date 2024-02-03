@@ -39,7 +39,8 @@ public class BA1C {
                     case 'C' -> 'G';
                     case 'G' -> 'C';
                     case 'T' -> 'A';
-                    default -> throw new RuntimeException("Incorrect nucleotide provided: %c".formatted(nucleotide));
+                    default -> throw new RuntimeException("Incorrect nucleotide provided: %c"
+                            .formatted(nucleotide));
                 };
     }
 
