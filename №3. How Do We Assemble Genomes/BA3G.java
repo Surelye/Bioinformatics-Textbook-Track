@@ -37,33 +37,30 @@ import java.util.*;
 
 public class BA3G {
 
-    private static List<Integer>
-    findEulerianPathMachinery(Map<Integer, List<Integer>> graph, Map<Integer,
-            int[]> inOutDegrees) {
-        int starts = 0, ends = 0, start = 0, end = 0;
-        for (int node : inOutDegrees.keySet()) {
+    private static<T> List<T>
+    findEulerianPathMachinery(Map<T, List<T>> graph, Map<T, int[]> inOutDegrees) {
+        T start = null, end = null;
+        for (T node : inOutDegrees.keySet()) {
             int[] degrees = inOutDegrees.get(node);
             if (degrees[0] != degrees[1]) {
                 if (degrees[0] + 1 == degrees[1]) {
-                    ++starts;
                     start = node;
                 } else if (degrees[1] + 1 == degrees[0]) {
-                    ++ends;
                     end = node;
                 }
             }
         }
-        if (!(starts == 1 && ends == 1)) {
-            throw new RuntimeException("Graph does not contain an Eulerian path");
+        if (start == null || end == null) {
+            throw new RuntimeException("Provided graph doesn't contain an Eulerian path");
         }
         if (graph.containsKey(end)) {
             graph.get(end).add(start);
         } else {
             graph.put(end, new ArrayList<>(List.of(start)));
         }
-        List<Integer> circuit = BA3F.findEulerianCycle(graph).stream().skip(1).toList();
+        List<T> circuit = BA3F.findEulerianCycle(graph).stream().skip(1).toList();
         int indexOfStart = circuit.indexOf(start), circuitSize = circuit.size();
-        List<Integer> path = new ArrayList<>();
+        List<T> path = new ArrayList<>();
         for (int i = indexOfStart; i < circuitSize + indexOfStart; ++i) {
             path.add(circuit.get(i % circuitSize));
         }
@@ -72,19 +69,19 @@ public class BA3G {
         return path;
     }
 
-    private static List<Integer> findEulerianPathWrapper(Map<Integer, List<Integer>> graph) {
-        Map<Integer, int[]> inOutDegrees = new HashMap<>();
-        List<Integer> adjList;
+    private static<T> List<T> findEulerianPathWrapper(Map<T, List<T>> graph) {
+        Map<T, int[]> inOutDegrees = new HashMap<>();
+        List<T> adjList;
 
-        for (int node : graph.keySet()) {
+        for (T node : graph.keySet()) {
             adjList = graph.get(node);
 
             if (inOutDegrees.containsKey(node)) {
-                inOutDegrees.get(node)[1] += adjList.size();
+                inOutDegrees.get(node)[1] = adjList.size();
             } else {
                 inOutDegrees.put(node, new int[]{0, adjList.size()});
             }
-            for (int adjNode : adjList) {
+            for (T adjNode : adjList) {
                 if (inOutDegrees.containsKey(adjNode)) {
                     ++inOutDegrees.get(adjNode)[0];
                 } else {
@@ -110,7 +107,7 @@ public class BA3G {
         return findEulerianPathWrapper(graph);
     }
 
-    public static List<Integer> findEulerianPath(Map<Integer, List<Integer>> graph) {
+    public static<T> List<T> findEulerianPath(Map<T, List<T>> graph) {
         return findEulerianPathWrapper(graph);
     }
 }

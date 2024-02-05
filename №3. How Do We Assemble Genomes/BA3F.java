@@ -42,56 +42,32 @@
 // 6->8->7->9->6->5->4->2->1->0->3->2->6
 // -------------
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
 public class BA3F {
 
-    private static List<Integer> findEulerianCycleMachinery(Map<Integer, List<Integer>> graph) {
-        int[] edgeCount = new int[graph.keySet().size()];
-        for (int vertex : graph.keySet()) {
-            edgeCount[vertex] = graph.get(vertex).size();
-        }
-        Deque<Integer> currentPath = new ArrayDeque<>(List.of(0));
-        List<Integer> circuit = new ArrayList<>();
-        int v = 0, nextV;
+    private static<T> List<T> findEulerianCycleMachinery(Map<T, List<T>> graph) {
+        T v = graph.keySet().stream().toList().getFirst();
+        Deque<T> currentPath = new ArrayDeque<>(List.of(v));
+        List<T> circuit = new ArrayList<>();
 
         while (!currentPath.isEmpty()) {
             // If there's remaining edge
-            if (edgeCount[v] != 0) {
-                // Push the vertex
-                currentPath.push(v);
-                //Find the next vertex using an edge
-                nextV = graph.get(v).getLast();
-                // and remove that edge
-                --edgeCount[v];
-                graph.get(v).removeLast();
-                // Move to next vertex
-                v = nextV;
-            } else {
+            if (graph.get(v).isEmpty()) {
                 circuit.add(v);
                 v = currentPath.pop();
+            } else {
+                // Push the vertex
+                currentPath.push(v);
+                // Find the next vertex using an edge and remove that edge
+                // amd move to next vertex
+                v = graph.get(v).removeLast();
+                // Move to next vertex
             }
         }
         circuit = circuit.reversed();
-        int circuitLength = circuit.size(), i = 1;
-
-        for (int vertex : circuit) {
-            System.out.printf("%s%s", vertex, (i == circuitLength) ? "\n" : "->");
-            ++i;
-        }
-
-        try (FileWriter fileWriter = new FileWriter("answer.txt")) {
-            i = 1;
-            for (int vertex : circuit) {
-                fileWriter.write("%s%s".formatted(vertex, (i == circuitLength) ? "\n" : "->"));
-                ++i;
-            }
-        } catch (IOException e) {
-            System.out.println("Failed to write to file");
-        }
+        BA3UTIL.writePathToFile(circuit);
 
         return circuit;
     }
@@ -112,7 +88,7 @@ public class BA3F {
         return findEulerianCycleMachinery(graph);
     }
 
-    public static List<Integer> findEulerianCycle(Map<Integer, List<Integer>> graph) {
+    public static<T> List<T> findEulerianCycle(Map<T, List<T>> graph) {
         return findEulerianCycleMachinery(graph);
     }
 }
