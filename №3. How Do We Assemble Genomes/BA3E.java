@@ -48,7 +48,7 @@ import java.util.*;
 
 public class BA3E {
 
-    public static Map<String, List<String>>
+    private static Map<String, List<String>>
     constructDeBruijnGraphFromKMersMachinery(List<String> kMers) {
         int decK = kMers.getFirst().length() - 1;
         String prefix, suffix;
