@@ -43,4 +43,28 @@ public class BA3UTIL {
             System.out.println("Failed to write to file");
         }
     }
+
+    public static<T> void printPath(List<T> path) {
+        int pathSize = path.size();
+        int i = 1;
+
+        for (T node : path) {
+            System.out.printf("%s%s", node, (i == pathSize) ? "\n" : "->");
+            ++i;
+        }
+    }
+
+    public static <T> void writePathToFile(List<T> path) {
+        int pathSize = path.size();
+        int i = 1;
+
+        try (FileWriter fileWriter = new FileWriter("answer.txt")) {
+            for (T node : path) {
+                fileWriter.write("%s%s".formatted(node, (i == pathSize) ? "\n" : "->"));
+                ++i;
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
+    }
 }
