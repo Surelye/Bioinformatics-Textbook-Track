@@ -39,8 +39,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-
-
 public class BA3A {
 
     private static List<String> getStringCompositionMachinery(int k, String text) {
