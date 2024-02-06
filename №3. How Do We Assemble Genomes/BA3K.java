@@ -46,39 +46,36 @@
 // -------------
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 public class BA3K {
 
-    private static Map<String, int[]> getInOutDegrees(Map<String, List<String>> graph) {
-        Map<String, int[]> inOutDegrees = new HashMap<>();
+    private static String contigPathToString(List<String> contigPath) {
+        int contigPathSize = contigPath.size();
+        String head = contigPath.getFirst();
+        int decPathNodeLength = head.length() - 1;
+        StringBuilder contig = new StringBuilder(head);
 
-        for (String node : graph.keySet()) {
-            if (inOutDegrees.containsKey(node)) {
-                inOutDegrees.get(node)[1] = graph.get(node).size();
-            } else {
-                inOutDegrees.put(node, new int[]{0, graph.get(node).size()});
-            }
-
-            for (String adjNode : graph.get(node)) {
-                if (inOutDegrees.containsKey(adjNode)) {
-                    inOutDegrees.get(adjNode)[0] += 1;
-                } else {
-                    inOutDegrees.put(adjNode, new int[]{1, 0});
-                }
-            }
+        for (int i = 1; i < contigPathSize; ++i) {
+            contig.append(contigPath.get(i).charAt(decPathNodeLength));
         }
 
-        return inOutDegrees;
+        return contig.toString();
     }
 
     private static List<String> generateContigsMachinery(List<String> patterns) {
         Map<String, List<String>> deBruijnGraph = BA3E.constructDeBruijnGraphFromKMers(patterns);
-        Map<String, int[]> inOutDegrees = getInOutDegrees(deBruijnGraph);
+        List<List<String>> contigPaths = BA3UTIL.findAllMaximalNonBranchingPaths(deBruijnGraph);
+        List<String> contigs = new ArrayList<>();
 
-        return List.of();
+        for (List<String> contigPath : contigPaths) {
+            contigs.add(contigPathToString(contigPath));
+        }
+        UTIL.writeToFile(contigs);
+
+        return contigs;
     }
 
     public static List<String> generateContigs(Path path) {
