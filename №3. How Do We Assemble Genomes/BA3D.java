@@ -69,7 +69,6 @@ public class BA3D {
 
         return constructDeBruijnGraphMachinery(Integer.parseInt(strDataset.getFirst()),
                 strDataset.getLast());
-
     }
 
     public static Map<String, List<String>> constructDeBruijnGraph(int k, String text) {
