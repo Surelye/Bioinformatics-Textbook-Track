@@ -66,7 +66,6 @@ public class BA3E {
             }
         }
         BA3UTIL.sortGraphAdjLists(deBruijnGraph, stringComparator);
-        BA3UTIL.printGraph(deBruijnGraph);
         BA3UTIL.writeGraphToFile(deBruijnGraph);
 
         return deBruijnGraph;
