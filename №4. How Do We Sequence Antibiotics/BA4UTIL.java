@@ -76,6 +76,31 @@ public class BA4UTIL {
         return RNA.toString();
     }
 
+    public static int getAminoAcidIntegerMass(char aminoAcid) {
+        return switch (aminoAcid) {
+            case 'G' -> 57;
+            case 'A' -> 71;
+            case 'S' -> 87;
+            case 'P' -> 97;
+            case 'V' -> 99;
+            case 'T' -> 101;
+            case 'C' -> 103;
+            case 'I', 'L' -> 113;
+            case 'N' -> 114;
+            case 'D' -> 115;
+            case 'K', 'Q' -> 128;
+            case 'E' -> 129;
+            case 'M' -> 131;
+            case 'H' -> 137;
+            case 'F' -> 147;
+            case 'R' -> 156;
+            case 'Y' -> 163;
+            case 'W' -> 186;
+            default -> throw new RuntimeException("Nonexistent amino acid provided: %c"
+                    .formatted(aminoAcid));
+        };
+    }
+
     public static String translate(String DNA) {
         int DNALength = DNA.length();
         String codon;
