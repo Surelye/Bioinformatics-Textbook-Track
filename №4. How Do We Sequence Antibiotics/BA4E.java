@@ -93,6 +93,7 @@ public class BA4E {
             for (String peptideToRemove : peptidesToRemove) {
                 peptides.remove(peptideToRemove);
             }
+            peptides = new ArrayList<>();
         }
         List<List<Integer>> peptidesAsAminoAcidsMasses = properPeptides
                 .stream()
