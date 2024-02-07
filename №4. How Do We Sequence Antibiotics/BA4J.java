@@ -53,7 +53,7 @@ import java.util.List;
 
 public class BA4J {
 
-    private static List<Integer> linearSpectrumMachinery(String peptide) {
+    private static List<Integer> getLinearSpectrumMachinery(String peptide) {
         int peptideLength = peptide.length();
         char aminoAcid;
         int[] prefixMass = new int[peptideLength + 1];
@@ -76,11 +76,11 @@ public class BA4J {
         return linearSpectrum;
     }
 
-    public static List<Integer> linearSpectrum(Path path) {
-        return linearSpectrumMachinery(UTIL.readDataset(path).getFirst());
+    public static List<Integer> getLinearSpectrum(Path path) {
+        return getLinearSpectrumMachinery(UTIL.readDataset(path).getFirst());
     }
 
-    public static List<Integer> linearSpectrum(String peptide) {
-        return linearSpectrumMachinery(peptide);
+    public static List<Integer> getLinearSpectrum(String peptide) {
+        return getLinearSpectrumMachinery(peptide);
     }
 }

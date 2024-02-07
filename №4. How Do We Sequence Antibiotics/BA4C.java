@@ -44,14 +44,14 @@ import java.util.*;
 
 public class BA4C {
 
-    private static List<Integer> generateTheoreticalSpectrumMachinery(String cyclicPeptide) {
+    private static List<Integer> getCyclicSpectrumMachinery(String cyclicPeptide) {
         int peptideLength = cyclicPeptide.length();
         String peptideExtended = cyclicPeptide + cyclicPeptide.substring(0, peptideLength - 2);
         int extendedLength = 2 * peptideLength - 2;
         char aminoAcid;
         int[] prefixMass = new int[extendedLength + 1];
         prefixMass[0] = 0;
-        List<Integer> cyclospectrum = BA4J.linearSpectrum(cyclicPeptide);
+        List<Integer> cyclospectrum = BA4J.getLinearSpectrum(cyclicPeptide);
 
         for (int i = 1; i <= extendedLength; ++i) {
             aminoAcid = peptideExtended.charAt(i - 1);
@@ -69,11 +69,11 @@ public class BA4C {
         return cyclospectrum;
     }
 
-    public static List<Integer> generateTheoreticalSpectrum(Path path) {
-        return generateTheoreticalSpectrumMachinery(UTIL.readDataset(path).getFirst());
+    public static List<Integer> getCyclicSpectrum(Path path) {
+        return getCyclicSpectrumMachinery(UTIL.readDataset(path).getFirst());
     }
 
-    public static List<Integer> generateTheoreticalSpectrum(String peptide) {
-        return generateTheoreticalSpectrumMachinery(peptide);
+    public static List<Integer> getCyclicSpectrum(String peptide) {
+        return getCyclicSpectrumMachinery(peptide);
     }
 }
