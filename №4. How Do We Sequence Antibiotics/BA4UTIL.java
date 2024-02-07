@@ -1,4 +1,15 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class BA4UTIL {
+
+    public static char[] aminoAcidsOfUniqueIntegerMass = new char[]{
+            'G', 'A', 'S', 'P', 'V', 'T',
+            'C', 'I', 'N', 'D', 'K', 'E',
+            'M', 'H', 'F', 'R', 'Y', 'W'
+    };
 
     public static char RNACodonToAminoAcid(String codon) {
         return switch (codon) {
@@ -76,6 +87,19 @@ public class BA4UTIL {
         return RNA.toString();
     }
 
+    public static String translate(String DNA) {
+        int DNALength = DNA.length();
+        String codon;
+        StringBuilder peptide = new StringBuilder();
+
+        for (int i = 0; i < DNALength; i += 3) {
+            codon = DNA.substring(i, i + 3);
+            peptide.append(DNACodonToAminoAcid(codon));
+        }
+
+        return peptide.toString();
+    }
+
     public static int getAminoAcidIntegerMass(char aminoAcid) {
         return switch (aminoAcid) {
             case 'G' -> 57;
@@ -101,16 +125,43 @@ public class BA4UTIL {
         };
     }
 
-    public static String translate(String DNA) {
-        int DNALength = DNA.length();
-        String codon;
-        StringBuilder peptide = new StringBuilder();
+    public static int getPeptideMass(String peptide) {
+        int peptideLength = peptide.length();
+        int mass = 0;
 
-        for (int i = 0; i < DNALength; i += 3) {
-            codon = DNA.substring(i, i + 3);
-            peptide.append(DNACodonToAminoAcid(codon));
+        for (int i = 0; i < peptideLength; ++i) {
+            mass += getAminoAcidIntegerMass(peptide.charAt(i));
         }
 
-        return peptide.toString();
+        return mass;
+    }
+
+    public static List<Integer> peptideToMassList(String peptide) {
+        int peptideLength = peptide.length();
+        List<Integer> peptideAminoAcidsMasses = new ArrayList<>();
+
+        for (int i = 0; i < peptideLength; ++i) {
+            peptideAminoAcidsMasses.add(getAminoAcidIntegerMass(peptide.charAt(i)));
+        }
+
+        return peptideAminoAcidsMasses;
+    }
+
+    public static void writePeptidesToFile(List<List<Integer>> peptides) {
+        int i, peptideSize;
+
+        try (FileWriter fileWriter = new FileWriter("answer.txt")) {
+            for (List<Integer> peptide : peptides) {
+                peptideSize = peptide.size();
+                i = 1;
+                for (int aminoAcidMass : peptide) {
+                    fileWriter.write("%d%c"
+                            .formatted(aminoAcidMass, (i == peptideSize) ? ' ' : '-'));
+                    ++i;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 }
