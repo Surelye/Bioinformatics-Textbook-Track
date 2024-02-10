@@ -67,6 +67,12 @@ public class BA4UTIL {
         };
     }
 
+    public static<T> void swap(List<T> lst, int i, int j) {
+        T swap = lst.get(i);
+        lst.set(i, lst.get(j));
+        lst.set(j, swap);
+    }
+
     public static String transcribe(String DNA) {
         int DNALength = DNA.length();
         StringBuilder RNA = new StringBuilder(DNALength);
