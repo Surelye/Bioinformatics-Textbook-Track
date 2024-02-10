@@ -72,17 +72,17 @@ public class BA4L {
     trimMachinery(List<String> leaderboard, List<Integer> spectrum, int N) {
         int leaderboardSize = leaderboard.size(), score;
         List<Integer> linearScores = new ArrayList<>();
-
         for (String peptide : leaderboard) {
             score = BA4K.computeLinearPeptideScore(peptide, spectrum);
             linearScores.add(score);
         }
         quickSort(linearScores, leaderboard, 0, leaderboardSize - 1);
 
-        int boundLinearScores = linearScores.get(N - 1);
+        int boundLinearScore = linearScores.get(N - 1);
         for (int i = N; i < leaderboardSize; ++i) {
-            if (linearScores.get(i) < boundLinearScores) {
-                leaderboard = leaderboard.subList(0, N);
+            if (linearScores.get(i) < boundLinearScore) {
+                leaderboard = leaderboard.subList(0, i);
+                break;
             }
         }
         UTIL.writeToFile(leaderboard);
