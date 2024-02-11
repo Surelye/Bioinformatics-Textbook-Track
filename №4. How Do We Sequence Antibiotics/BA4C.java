@@ -46,7 +46,8 @@ public class BA4C {
 
     private static List<Integer> getCyclicSpectrumMachinery(String cyclicPeptide) {
         int peptideLength = cyclicPeptide.length();
-        String peptideExtended = cyclicPeptide + cyclicPeptide.substring(0, peptideLength - 2);
+        String peptideExtended = cyclicPeptide +
+                cyclicPeptide.substring(0, Math.max(0, peptideLength - 2));
         int extendedLength = 2 * peptideLength - 2;
         char aminoAcid;
         int[] prefixMass = new int[extendedLength + 1];
@@ -64,9 +65,36 @@ public class BA4C {
             }
         }
         cyclospectrum.sort(Integer::compare);
-        UTIL.writeToFile(cyclospectrum);
 
         return cyclospectrum;
+    }
+
+    private static List<Integer> getCyclicSpectrumMachinery(List<Integer> cyclicPeptide) {
+        int peptideSize = cyclicPeptide.size();
+        List<Integer> peptideExtended = new ArrayList<>(cyclicPeptide);
+        peptideExtended.addAll(cyclicPeptide.subList(0, Math.max(0, peptideSize - 2)));
+        int extendedSize = 2 * peptideSize - 2, aminoAcidMass;
+        int[] prefixMass = new int[extendedSize + 1];
+        prefixMass[0] = 0;
+        List<Integer> cyclospectrum = BA4J.getLinearSpectrum(cyclicPeptide);
+
+        for (int i = 1; i <= extendedSize; ++i) {
+            aminoAcidMass = peptideExtended.get(i - 1);
+            prefixMass[i] = prefixMass[i - 1] + aminoAcidMass;
+        }
+        for (int i = 1; i < peptideSize - 1; ++i) {
+            for (int j = 0; j < i; ++j) {
+                cyclospectrum.add(prefixMass[peptideSize + j + 1] -
+                        prefixMass[peptideSize - i + j]);
+            }
+        }
+        cyclospectrum.sort(Integer::compare);
+
+        return cyclospectrum;
+    }
+
+    public static List<Integer> getCyclicSpectrum(List<Integer> peptide) {
+        return getCyclicSpectrumMachinery(peptide);
     }
 
     public static List<Integer> getCyclicSpectrum(Path path) {

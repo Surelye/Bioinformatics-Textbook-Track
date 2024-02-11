@@ -43,58 +43,86 @@
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class BA4L {
 
-    private static void
-    quickSort(List<Integer> scores, List<String> peptides, int left, int right) {
-        if (left >= right || left < 0) {
-            return;
-        }
-
-        int pivot = scores.get(right), p = left;
-        for (int i = left; i < right; ++i) {
-            if (scores.get(i) > pivot) {
-                BA4UTIL.swap(scores, i, p);
-                BA4UTIL.swap(peptides, i, p);
-                ++p;
-            }
-        }
-        BA4UTIL.swap(scores, p, right);
-        BA4UTIL.swap(peptides, p, right);
-
-        quickSort(scores, peptides, left, p - 1);
-        quickSort(scores, peptides, p + 1, right);
-    }
-
     private static List<String>
     trimMachinery(List<String> leaderboard, List<Integer> spectrum, int N) {
         int leaderboardSize = leaderboard.size(), score;
-        List<Integer> linearScores = new ArrayList<>();
+        List<Pair<String, Integer>> peptidesAndTheirScores = new ArrayList<>();
         for (String peptide : leaderboard) {
             score = BA4K.computeLinearPeptideScore(peptide, spectrum);
-            linearScores.add(score);
+            peptidesAndTheirScores.add(new Pair<>(
+                    peptide,
+                    score
+            ));
         }
-        quickSort(linearScores, leaderboard, 0, leaderboardSize - 1);
+        peptidesAndTheirScores.sort(Comparator.comparing(Pair::getSecond));
+        peptidesAndTheirScores = peptidesAndTheirScores.reversed();
 
-        int boundLinearScore = linearScores.get(N - 1);
+        int boundLinearScore = peptidesAndTheirScores
+                .get(Math.min(leaderboardSize - 1, N - 1)).getSecond();
         for (int i = N; i < leaderboardSize; ++i) {
-            if (linearScores.get(i) < boundLinearScore) {
-                leaderboard = leaderboard.subList(0, i);
-                break;
+            if (peptidesAndTheirScores.get(i).getSecond() < boundLinearScore) {
+                return peptidesAndTheirScores
+                        .subList(0, i)
+                        .stream()
+                        .map(Pair::getFirst)
+                        .toList();
             }
         }
-        UTIL.writeToFile(leaderboard);
 
-        return leaderboard;
+        return peptidesAndTheirScores
+                .stream()
+                .map(Pair::getFirst)
+                .toList();
+    }
+
+    private static List<List<Integer>>
+    trimListPeptideMachinery(List<List<Integer>> leaderboard, List<Integer> spectrum, int N) {
+        int leaderboardSize = leaderboard.size(), score;
+        List<Pair<List<Integer>, Integer>> peptidesAndTheirScores = new ArrayList<>();
+        for (List<Integer> peptide : leaderboard) {
+            score = BA4F.computeCyclicPeptideScore(peptide, spectrum);
+            peptidesAndTheirScores.add(new Pair<>(
+                    peptide,
+                    score
+            ));
+        }
+        peptidesAndTheirScores.sort(Comparator.comparing(Pair::getSecond));
+        peptidesAndTheirScores = peptidesAndTheirScores.reversed();
+
+        int boundLinearScore = peptidesAndTheirScores
+                .get(Math.min(leaderboardSize - 1, N - 1)).getSecond();
+        for (int i = N; i < leaderboardSize; ++i) {
+            if (peptidesAndTheirScores.get(i).getSecond() < boundLinearScore) {
+                return peptidesAndTheirScores
+                        .subList(0, i)
+                        .stream()
+                        .map(Pair::getFirst)
+                        .toList();
+            }
+        }
+
+        return peptidesAndTheirScores
+                .stream()
+                .map(Pair::getFirst)
+                .toList();
+    }
+
+    public static List<List<Integer>>
+    trimListPeptide(List<List<Integer>> leaderboard, List<Integer> spectrum, int N) {
+        return trimListPeptideMachinery(leaderboard, spectrum, N);
     }
 
     public static List<String> trim(Path path) {
         List<String> strDataset = UTIL.readDataset(path);
 
         return trimMachinery(
-                new ArrayList<>(Arrays.stream(strDataset.getFirst().split("\\s+")).toList()),
+                new ArrayList<>(Arrays.stream(strDataset
+                        .getFirst().split("\\s+")).toList()),
                 UTIL.parseIntArray(strDataset.get(1)),
                 Integer.parseInt(strDataset.getLast())
         );

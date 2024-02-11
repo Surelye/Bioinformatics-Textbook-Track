@@ -42,75 +42,47 @@
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class BA4E {
 
-    private static List<String> expand(List<String> peptides) {
-        List<String> expandedPeptides = new ArrayList<>();
-
-        for (String peptide : peptides) {
-            for (char aminoAcid : BA4UTIL.aminoAcidsOfUniqueIntegerMass) {
-                expandedPeptides.add(peptide + aminoAcid);
-            }
-        }
-
-        return expandedPeptides;
-    }
-
-    private static boolean
-    isPeptideConsistentWithSpectrum(String peptide, List<Integer> spectrum) {
-        List<Integer> peptideSpectrum = BA4J.getLinearSpectrum(peptide);
-        List<Integer> spectrumCopy = new ArrayList<>(spectrum);
-
-        for (Integer subpeptideMass : peptideSpectrum) {
-            if (!spectrumCopy.remove(subpeptideMass)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static List<List<Integer>> cyclopeptideSequencingMachinery(List<Integer> spectrum) {
+    private static Set<List<Integer>> cyclopeptideSequencingMachinery(List<Integer> spectrum) {
         int parentMass = spectrum.getLast();
-        List<String> peptides = new ArrayList<>(List.of(""));
-        List<String> peptidesToRemove = new ArrayList<>();
-        List<String> properPeptides = new ArrayList<>();
+        Set<List<Integer>> peptides = new HashSet<>(Set.of(new ArrayList<>(List.of())));
+        Set<List<Integer>> peptidesToRemove = new HashSet<>();
+        Set<List<Integer>> properPeptides = new HashSet<>();
 
         while (!peptides.isEmpty()) {
-            peptides = expand(peptides);
-            for (String peptide : peptides) {
+            peptides = BA4UTIL.expand(peptides, BA4UTIL.uniqueAminoAcidMasses);
+            for (List<Integer> peptide : peptides) {
                 if (BA4UTIL.getPeptideMass(peptide) == parentMass) {
                     if (BA4C.getCyclicSpectrum(peptide).equals(spectrum)) {
                         properPeptides.add(peptide);
                     }
                     peptidesToRemove.add(peptide);
-                } else if (!isPeptideConsistentWithSpectrum(peptide, spectrum)) {
+                } else if (!BA4UTIL.isPeptideConsistentWithSpectrum(peptide, spectrum)) {
                     peptidesToRemove.add(peptide);
                 }
             }
-            for (String peptideToRemove : peptidesToRemove) {
+            for (List<Integer> peptideToRemove : peptidesToRemove) {
                 peptides.remove(peptideToRemove);
             }
-            peptidesToRemove = new ArrayList<>();
+            peptidesToRemove = new HashSet<>();
         }
-        List<List<Integer>> peptidesAsAminoAcidsMasses = properPeptides
-                .stream()
-                .map(BA4UTIL::peptideToMassList)
-                .toList();
-        BA4UTIL.writePeptidesToFile(peptidesAsAminoAcidsMasses);
+        BA4UTIL.writePeptidesToFile(properPeptides);
 
-        return peptidesAsAminoAcidsMasses;
+        return properPeptides;
     }
 
-    public static List<List<Integer>> cyclopeptideSequencing(Path path) {
+    public static Set<List<Integer>> cyclopeptideSequencing(Path path) {
         return cyclopeptideSequencingMachinery(
                 UTIL.parseIntArray(UTIL.readDataset(path).getFirst())
         );
     }
 
-    public static List<List<Integer>> cyclopeptideSequencing(List<Integer> spectrum) {
+    public static Set<List<Integer>> cyclopeptideSequencing(List<Integer> spectrum) {
         return cyclopeptideSequencingMachinery(spectrum);
     }
 }

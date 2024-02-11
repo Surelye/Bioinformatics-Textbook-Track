@@ -71,13 +71,37 @@ public class BA4J {
             }
         }
         linearSpectrum.sort(Integer::compare);
-        UTIL.writeToFile(linearSpectrum);
+
+        return linearSpectrum;
+    }
+
+    private static List<Integer> getLinearSpectrumMachinery(List<Integer> peptide) {
+        int peptideSize = peptide.size(), aminoAcidMass;
+        int[] prefixMass = new int[peptideSize + 1];
+        prefixMass[0] = 0;
+        List<Integer> linearSpectrum = new ArrayList<>(List.of(0));
+
+        for (int i = 1; i <= peptideSize; ++i) {
+            aminoAcidMass = peptide.get(i - 1);
+            prefixMass[i] = prefixMass[i - 1] + aminoAcidMass;
+        }
+
+        for (int i = 0; i < peptideSize; ++i) {
+            for (int j = i + 1; j <= peptideSize; ++j) {
+                linearSpectrum.add(prefixMass[j] - prefixMass[i]);
+            }
+        }
+        linearSpectrum.sort(Integer::compare);
 
         return linearSpectrum;
     }
 
     public static List<Integer> getLinearSpectrum(Path path) {
         return getLinearSpectrumMachinery(UTIL.readDataset(path).getFirst());
+    }
+
+    public static List<Integer> getLinearSpectrum(List<Integer> peptide) {
+        return getLinearSpectrumMachinery(peptide);
     }
 
     public static List<Integer> getLinearSpectrum(String peptide) {

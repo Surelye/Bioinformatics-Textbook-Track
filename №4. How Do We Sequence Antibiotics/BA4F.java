@@ -72,6 +72,32 @@ public class BA4F {
         return score;
     }
 
+    private static int
+    computeCyclicPeptideScoreMachinery(List<Integer> peptide, List<Integer> spectrum) {
+        int score = 0, entries;
+        List<Integer> cyclospectrum = BA4C.getCyclicSpectrum(peptide);
+        Map<Integer, Integer> massToEntryMapping = new HashMap<>();
+        for (int mass : spectrum) {
+            if (massToEntryMapping.containsKey(mass)) {
+                massToEntryMapping.put(mass, massToEntryMapping.get(mass) + 1);
+            } else {
+                massToEntryMapping.put(mass, 1);
+            }
+        }
+
+        for (int subpeptideMass : cyclospectrum) {
+            if (massToEntryMapping.containsKey(subpeptideMass)) {
+                entries = massToEntryMapping.get(subpeptideMass);
+                if (entries != 0) {
+                    massToEntryMapping.put(subpeptideMass, entries - 1);
+                    ++score;
+                }
+            }
+        }
+
+        return score;
+    }
+
     public static int computeCyclicPeptideScore(Path path) {
         List<String> strDataset = UTIL.readDataset(path);
 
@@ -79,6 +105,10 @@ public class BA4F {
                 strDataset.getFirst(),
                 UTIL.parseIntArray(strDataset.getLast())
         );
+    }
+
+    public static int computeCyclicPeptideScore(List<Integer> peptide, List<Integer> spectrum) {
+        return computeCyclicPeptideScoreMachinery(peptide, spectrum);
     }
 
     public static int computeCyclicPeptideScore(String peptide, List<Integer> spectrum) {

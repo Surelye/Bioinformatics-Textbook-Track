@@ -28,6 +28,32 @@ import java.util.Map;
 public class BA4K {
 
     private static int
+    computeLinearPeptideScoreMachinery(List<Integer> peptide, List<Integer> linearSpectrum) {
+        int score = 0, entries;
+        List<Integer> peptideLinearSpectrum = BA4J.getLinearSpectrum(peptide);
+        Map<Integer, Integer> massToEntry = new HashMap<>();
+        for (int mass : linearSpectrum) {
+            if (massToEntry.containsKey(mass)) {
+                massToEntry.put(mass, massToEntry.get(mass) + 1);
+            } else {
+                massToEntry.put(mass, 1);
+            }
+        }
+
+        for (int subpeptideMass : peptideLinearSpectrum) {
+            if (massToEntry.containsKey(subpeptideMass)) {
+                entries = massToEntry.get(subpeptideMass);
+                if (entries != 0) {
+                    massToEntry.put(subpeptideMass, entries - 1);
+                    ++score;
+                }
+            }
+        }
+
+        return score;
+    }
+
+    private static int
     computeLinearPeptideScoreMachinery(String peptide, List<Integer> linearSpectrum) {
         int score = 0, entries;
         List<Integer> peptideLinearSpectrum = BA4J.getLinearSpectrum(peptide);
@@ -62,7 +88,11 @@ public class BA4K {
         );
     }
 
-    public static int computeLinearPeptideScore(String peptide, List<Integer> linearSpectrum) {
-        return computeLinearPeptideScoreMachinery(peptide, linearSpectrum);
+    public static int computeLinearPeptideScore(List<Integer> peptide, List<Integer> spectrum) {
+        return computeLinearPeptideScoreMachinery(peptide, spectrum);
+    }
+
+    public static int computeLinearPeptideScore(String peptide, List<Integer> Spectrum) {
+        return computeLinearPeptideScoreMachinery(peptide, Spectrum);
     }
 }
