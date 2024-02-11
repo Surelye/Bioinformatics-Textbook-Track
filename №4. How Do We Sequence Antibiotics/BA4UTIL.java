@@ -1,15 +1,53 @@
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class BA4UTIL {
 
-    public static char[] aminoAcidsOfUniqueIntegerMass = new char[]{
-            'G', 'A', 'S', 'P', 'V', 'T',
-            'C', 'I', 'N', 'D', 'K', 'E',
-            'M', 'H', 'F', 'R', 'Y', 'W'
-    };
+    public static List<Integer> uniqueAminoAcidMasses = new ArrayList<>(List.of(
+            57, 71, 87, 97, 99, 101,
+            103, 113, 114, 115, 128, 129,
+            131, 137, 147, 156, 163, 186
+    ));
+
+    public static Set<List<Integer>>
+    expand(Set<List<Integer>> peptides, List<Integer> aminoAcidMasses) {
+        Set<List<Integer>> expandedPeptides = new HashSet<>();
+
+        for (List<Integer> peptide : peptides) {
+            for (int aminoAcidMass : aminoAcidMasses) {
+                List<Integer> currentPeptide = new ArrayList<>(peptide);
+                currentPeptide.add(aminoAcidMass);
+                expandedPeptides.add(currentPeptide);
+            }
+        }
+
+        return expandedPeptides;
+    }
+
+    public static int getPeptideMass(List<Integer> peptide) {
+        int mass = 0;
+
+        for (Integer aminoAcidMass : peptide) {
+            mass += aminoAcidMass;
+        }
+
+        return mass;
+    }
+
+    public static boolean
+    isPeptideConsistentWithSpectrum(List<Integer> peptide, List<Integer> spectrum) {
+        List<Integer> peptideSpectrum = BA4J.getLinearSpectrum(peptide);
+        List<Integer> spectrumCopy = new ArrayList<>(spectrum);
+
+        for (Integer subpeptideMass : peptideSpectrum) {
+            if (!spectrumCopy.remove(subpeptideMass)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     public static char RNACodonToAminoAcid(String codon) {
         return switch (codon) {
@@ -67,32 +105,6 @@ public class BA4UTIL {
         };
     }
 
-    public static<T> void swap(List<T> lst, int i, int j) {
-        T swap = lst.get(i);
-        lst.set(i, lst.get(j));
-        lst.set(j, swap);
-    }
-
-    public static String transcribe(String DNA) {
-        int DNALength = DNA.length();
-        StringBuilder RNA = new StringBuilder(DNALength);
-
-        for (int i = 0; i < DNALength; ++i) {
-            RNA.append(
-                    switch (DNA.charAt(i)) {
-                        case 'A' -> 'A';
-                        case 'C' -> 'C';
-                        case 'G' -> 'G';
-                        case 'T' -> 'U';
-                        default -> throw new RuntimeException("Incorrect nucleotide: %c"
-                                .formatted(DNA.charAt(i)));
-                    }
-            );
-        }
-
-        return RNA.toString();
-    }
-
     public static String translate(String DNA) {
         int DNALength = DNA.length();
         String codon;
@@ -131,29 +143,7 @@ public class BA4UTIL {
         };
     }
 
-    public static int getPeptideMass(String peptide) {
-        int peptideLength = peptide.length();
-        int mass = 0;
-
-        for (int i = 0; i < peptideLength; ++i) {
-            mass += getAminoAcidIntegerMass(peptide.charAt(i));
-        }
-
-        return mass;
-    }
-
-    public static List<Integer> peptideToMassList(String peptide) {
-        int peptideLength = peptide.length();
-        List<Integer> peptideAminoAcidsMasses = new ArrayList<>();
-
-        for (int i = 0; i < peptideLength; ++i) {
-            peptideAminoAcidsMasses.add(getAminoAcidIntegerMass(peptide.charAt(i)));
-        }
-
-        return peptideAminoAcidsMasses;
-    }
-
-    public static void writePeptidesToFile(List<List<Integer>> peptides) {
+    public static void writePeptidesToFile(Collection<List<Integer>> peptides) {
         int i, peptideSize;
 
         try (FileWriter fileWriter = new FileWriter("answer.txt")) {
