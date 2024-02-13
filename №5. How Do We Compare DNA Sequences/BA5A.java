@@ -9,7 +9,8 @@ public class BA5A {
     }
 
     private static int DPChangeMachinery(int money, int[] coins) {
-        int windowSize = coins[coins.length - 1], diff;
+        int largestNominal = coins[coins.length - 1], windowSize = Math.min(money, largestNominal),
+                diff;
         List<Integer> minNumCoinsWindow = new ArrayList<>(windowSize + 1);
         for (int i = 0; i <= windowSize; ++i) {
             minNumCoinsWindow.add(0);
