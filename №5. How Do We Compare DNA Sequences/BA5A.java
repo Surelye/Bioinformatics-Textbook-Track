@@ -1,48 +1,91 @@
+// Find the Minimum Number of Coins Needed to Make Change
+// ------------------------------------------------------
+//
+// The Change Problem
+//
+// Find the minimum number of coins needed to make change.
+//
+// Given: An integer money and an array Coins of positive integers.
+//
+// Return: The minimum number of coins with denominations Coins that changes money.
+//
+// Sample Dataset
+// --------------
+// 40
+// 1,5,10,20,25,50
+// --------------
+//
+// Sample Output
+// -------------
+// 2
+// -------------
+
 import java.nio.file.Path;
 import java.util.*;
 
 public class BA5A {
 
-    private static void shiftList(List<Integer> list) {
+    private static void shiftList(List<List<Integer>> list) {
         list.removeFirst();
-        list.add(0);
+        list.add(new ArrayList<>(List.of()));
     }
 
-    private static int DPChangeMachinery(int money, int[] coins) {
+    private static List<Integer> DPChangeMachinery(int money, int[] coins) {
         int largestNominal = coins[coins.length - 1], windowSize = Math.min(money, largestNominal),
                 diff;
-        List<Integer> minNumCoinsWindow = new ArrayList<>(windowSize + 1);
+        List<Integer> buffer;
+        List<List<Integer>> minCoinsWindow = new ArrayList<>(windowSize + 1);
         for (int i = 0; i <= windowSize; ++i) {
-            minNumCoinsWindow.add(0);
+            minCoinsWindow.add(new ArrayList<>(List.of()));
         }
 
         for (int i = 1; i <= windowSize; ++i) {
-            minNumCoinsWindow.set(i, Integer.MAX_VALUE);
             for (int coin : coins) {
                 if (i >= coin) {
                     diff = i - coin;
-                    if (minNumCoinsWindow.get(diff) + 1 < minNumCoinsWindow.get(i)) {
-                        minNumCoinsWindow.set(i, minNumCoinsWindow.get(diff) + 1);
+                    if (minCoinsWindow.get(i).isEmpty() ||
+                            minCoinsWindow.get(diff).size() + 1 < minCoinsWindow.get(i).size()) {
+                        buffer = new ArrayList<>(minCoinsWindow.get(diff));
+                        buffer.add(coin);
+                        minCoinsWindow.set(i, buffer);
                     }
                 }
             }
         }
-        shiftList(minNumCoinsWindow);
+        shiftList(minCoinsWindow);
         for (int i = windowSize + 1; i <= money; ++i) {
-            minNumCoinsWindow.set(windowSize, Integer.MAX_VALUE);
             for (int coin : coins) {
                 diff = windowSize - coin;
-                if (minNumCoinsWindow.get(diff) + 1 < minNumCoinsWindow.get(windowSize)) {
-                    minNumCoinsWindow.set(windowSize, minNumCoinsWindow.get(diff) + 1);
+                if (minCoinsWindow.get(windowSize).isEmpty() ||
+                        minCoinsWindow.get(diff).size() + 1 <
+                                minCoinsWindow.get(windowSize).size()) {
+                    buffer = new ArrayList<>(minCoinsWindow.get(diff));
+                    buffer.add(coin);
+                    minCoinsWindow.set(windowSize, buffer);
                 }
             }
-            shiftList(minNumCoinsWindow);
+            shiftList(minCoinsWindow);
         }
 
-        return minNumCoinsWindow.get(windowSize - 1);
+        return minCoinsWindow.get(windowSize - 1);
     }
 
-    public static int DPChange(Path path) {
+    public static int DPChangeNum(Path path) {
+        List<String> strDataset = UTIL.readDataset(path);
+
+        return DPChangeMachinery(
+                Integer.parseInt(strDataset.getFirst()),
+                Arrays.stream(strDataset.getLast().split(","))
+                        .mapToInt(Integer::parseInt)
+                        .toArray()
+        ).size();
+    }
+
+    public static int DPChangeNum(int money, int[] coins) {
+        return DPChangeMachinery(money, coins).size();
+    }
+
+    public static List<Integer> DPChange(Path path) {
         List<String> strDataset = UTIL.readDataset(path);
 
         return DPChangeMachinery(
@@ -53,7 +96,7 @@ public class BA5A {
         );
     }
 
-    public static int DPChange(int money, int[] coins) {
+    public static List<Integer> DPChange(int money, int[] coins) {
         return DPChangeMachinery(money, coins);
     }
 }
