@@ -23,6 +23,8 @@ import java.util.List;
 
 public class BA5C {
 
+    private static final StringBuilder lcs = new StringBuilder();
+
     private static char[][] LCSBacktrack(String v, String w) {
         int vLen = v.length(), wLen = w.length();
         int[][] s = new int[vLen + 1][wLen + 1];
@@ -39,11 +41,11 @@ public class BA5C {
                         )
                 );
                 if (s[i][j] == s[i - 1][j]) {
-                    backtrack[i][j] = 'b';
-                } else if (s[i][j] == s[i][j - 1]) {
-                    backtrack[i][j] = 'r';
-                } else if (s[i][j] == s[i - 1][j - 1] + 1 && equalChars) {
                     backtrack[i][j] = 'd';
+                } else if (s[i][j] == s[i][j - 1]) {
+                    backtrack[i][j] = 'i';
+                } else if (s[i][j] == s[i - 1][j - 1] + 1 && equalChars) {
+                    backtrack[i][j] = 'm';
                 }
             }
         }
@@ -51,28 +53,27 @@ public class BA5C {
         return backtrack;
     }
 
+    private static void outputLCS(char[][] backtrack, String v, int i, int j) {
+        if (i == 0 || j == 0) {
+            return;
+        }
+        if (backtrack[i][j] == 'd') {
+            outputLCS(backtrack, v, i - 1, j);
+        } else if (backtrack[i][j] == 'i') {
+            outputLCS(backtrack, v, i, j - 1);
+        } else {
+            outputLCS(backtrack, v, i - 1, j - 1);
+            lcs.append(v.charAt(i - 1));
+        }
+    }
+
     private static String findLongestCommonSubsequenceMachinery(String str1, String str2) {
-        StringBuilder lcs = new StringBuilder();
         int i = str1.length(), j = str2.length();
         char[][] backtrack = LCSBacktrack(str1, str2);
 
-        while (i != 0 && j != 0) {
-            if (backtrack[i][j] == 'b') {
-                i -= 1;
-            } else if (backtrack[i][j] == 'r') {
-                j -= 1;
-            } else {
-                i -= 1;
-                j -= 1;
-                try {
-                    lcs.append(str1.charAt(i));
-                } catch (StringIndexOutOfBoundsException e) {
-                    break;
-                }
-            }
-        }
+        outputLCS(backtrack, str1, i, j);
 
-        return lcs.reverse().toString();
+        return lcs.toString();
     }
 
     public static String findLongestCommonSubsequence(String str1, String str2) {
