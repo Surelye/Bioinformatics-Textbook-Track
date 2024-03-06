@@ -33,7 +33,7 @@ import java.util.Map;
 public class BA5F {
 
     private static int maxLocalAlignmentScore = Integer.MIN_VALUE;
-    private static int iJump, jJump;
+    private static Map.Entry<Integer, Integer> jump;
     private static final int indelPenalty = 5;
     private static final int[][] PAM250 = new int[][]{
             new int[]{ 2, -2,  0,  0, -3,  1, -1, -1, -1, -2, -1,  0,  1,  0, -2,  1,  1,  0, -6, -3},
@@ -87,10 +87,7 @@ public class BA5F {
             for (int j = 1; j <= wLen; ++j) {
                 wIndex = aminoAcidToIndex(w.charAt(j - 1));
                 s[i][j] = Math.max(
-                        Math.max(
-                                0,
-                                s[i - 1][j] - indelPenalty
-                        ),
+                        Math.max(0, s[i - 1][j] - indelPenalty),
                         Math.max(
                                 s[i][j - 1] - indelPenalty,
                                 s[i - 1][j - 1] + PAM250[vIndex][wIndex]
@@ -105,77 +102,41 @@ public class BA5F {
                 } else {
                     backtrack[i][j] = 'm';
                 }
+                if (s[i][j] > maxLocalAlignmentScore) {
+                    maxLocalAlignmentScore = s[i][j];
+                    jump = Map.entry(i, j);
+                }
             }
         }
-        findMaxAndJump(s, backtrack, vLen, wLen);
 
         return backtrack;
     }
 
-    private static void findMaxAndJump(int[][] s, char[][] backtrack, int vLen, int wLen) {
-        s[0][0] = Integer.MIN_VALUE;
-        s[vLen][wLen] = Integer.MIN_VALUE;
-
-        for (int i = 1; i <= vLen; ++i) {
-            for (int j = 1; j <= wLen; ++j) {
-                if (s[i][j] > maxLocalAlignmentScore) {
-                    maxLocalAlignmentScore = s[i][j];
-                    iJump = i;
-                    jJump = j;
-                }
-            }
-        }
-
-        int diff = (vLen - iJump) + (wLen - jJump);
-        if (diff > 2) {
-            backtrack[vLen][wLen] = 'j';
-        } else if (diff > 1) {
-            backtrack[vLen][wLen] = 'm';
-        } else {
-            backtrack[vLen][wLen] = (vLen - iJump > 0) ? 'd' : 'i';
-        }
-    }
-
-    private static void
-    outputLCS(char[][] backtrack, int i, int j, StringBuilder alignment) {
-        if (i == 0 || j == 0) {
-            while (!(i == 0 && j == 0)) {
-                while (i > 0) {
-                    alignment.append(backtrack[i--][0]);
-                }
-                while (j > 0) {
-                    alignment.append(backtrack[0][j--]);
-                }
-            }
-            return;
-        }
-        if (backtrack[i][j] == 'j') {
-            outputLCS(backtrack,  iJump, jJump, alignment);
-        } else if (backtrack[i][j] == 't') {
-            return;
-        } else if (backtrack[i][j] == 'd') {
-            outputLCS(backtrack,i - 1, j, alignment);
+    private static void outputLCS(char[][] backtrack, int i, int j, StringBuilder alignment) {
+        if (backtrack[i][j] == 'd') {
+            outputLCS(backtrack, i - 1, j, alignment);
         } else if (backtrack[i][j] == 'i') {
             outputLCS(backtrack, i, j - 1, alignment);
-        } else {
+        } else if (backtrack[i][j] == 'm') {
             outputLCS(backtrack, i - 1, j - 1, alignment);
+        } else {
+            return;
         }
         alignment.append(backtrack[i][j]);
     }
 
     private static Map.Entry<Integer, Map.Entry<String, String>>
     findHighestScoringLocalAlignmentMachinery(String v, String w) {
-        int i = v.length(), j = w.length();
-        StringBuilder localAlignment = new StringBuilder(),
+        StringBuilder alignment = new StringBuilder(),
                 vAligned = new StringBuilder(),
                 wAligned = new StringBuilder();
         char[][] backtrack = LCSBacktrack(v, w);
-        outputLCS(backtrack, i, j, localAlignment);
-        localAlignment.reverse();
+        int i = jump.getKey() - 1, j = jump.getValue() - 1;
+        outputLCS(backtrack, i + 1, j + 1, alignment);
+        alignment.reverse();
 
-        --i; --j;
-        for (int k = 0; k < localAlignment.length(); ++k) {
-            char edge = localAlignment.charAt(k);
+        for (int k = 0; k < alignment.length(); ++k) {
+            char edge = alignment.charAt(k);
             if (edge == 'd') {
                 vAligned.append(v.charAt(i--));
                 wAligned.append('-');
