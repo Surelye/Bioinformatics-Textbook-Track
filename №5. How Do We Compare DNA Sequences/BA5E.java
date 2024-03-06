@@ -107,7 +107,7 @@ public class BA5E {
     }
 
     private static void
-    outputLCS(char[][] backtrack, String v, int i, int j, StringBuilder alignment) {
+    outputLCS(char[][] backtrack, int i, int j, StringBuilder alignment) {
         if (i == 0 || j == 0) {
             while (!(i == 0 && j == 0)) {
                 if (i > 0) {
@@ -119,11 +119,11 @@ public class BA5E {
             return;
         }
         if (backtrack[i][j] == 'd') {
-            outputLCS(backtrack, v, i - 1, j, alignment);
+            outputLCS(backtrack, i - 1, j, alignment);
         } else if (backtrack[i][j] == 'i') {
-            outputLCS(backtrack, v, i, j - 1, alignment);
+            outputLCS(backtrack, i, j - 1, alignment);
         } else {
-            outputLCS(backtrack, v, i - 1, j - 1, alignment);
+            outputLCS(backtrack,i - 1, j - 1, alignment);
         }
         alignment.append(backtrack[i][j]);
     }
@@ -135,7 +135,7 @@ public class BA5E {
                 wAligned = new StringBuilder();
         int i = 0, j = 0;
         char[][] backtrack = LCSBacktrack(v, w);
-        outputLCS(backtrack, v, v.length(), w.length(), alignment);
+        outputLCS(backtrack, v.length(), w.length(), alignment);
 
         for (int k = 0; k < alignment.length(); ++k) {
             char edge = alignment.charAt(k);
