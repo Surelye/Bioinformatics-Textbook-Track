@@ -138,6 +138,18 @@ public class BA5J {
             }
 
             if (i == 0 || j == 0) {
+                while (i > 0) {
+                    vChar = v.charAt(i - 1);
+                    vAligned.append(vChar);
+                    wAligned.append('-');
+                    --i;
+                }
+                while (j > 0) {
+                    wChar = w.charAt(j - 1);
+                    wAligned.append('-');
+                    wAligned.append(wChar);
+                    --j;
+                }
                 break;
             }
         }
