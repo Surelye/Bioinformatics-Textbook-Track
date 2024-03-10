@@ -67,13 +67,13 @@ public class BA5K {
     }
 
     private static int[] findFrom(String v, String w) {
-        int vLen = v.length(), wLen = w.length(), middle = wLen / 2;
+        int vLen = v.length(), wLen = w.length();
         int vIndex, wIndex;
         int[] cur, next = new int[vLen + 1];
 
-        for (int i = 0; i <= middle; ++i) {
+        for (int i = 0; i < wLen; ++i) {
             cur = Arrays.copyOf(next, next.length);
-            if (i == middle) {
+            if (i == wLen - 1) {
                 fromSinkPrev = cur;
             }
             wIndex = aminoAcidToIndex(w.charAt(i));
@@ -90,30 +90,31 @@ public class BA5K {
     }
 
     private static List<Integer> findMiddleEdgeMachinery(String v, String w) {
-        int iFrom = 0, jFrom = w.length() / 2, iTo = 0, jTo = 0,
+        int vLen = v.length(), wLen = w.length(), middle = wLen / 2;
+        int iFrom = 0, jFrom = middle, iTo = 0, jTo = 0,
                 length, maxLength = Integer.MIN_VALUE;
         String vRev = new StringBuilder(v).reverse().toString(),
                 wRev = new StringBuilder(w).reverse().toString();
-        int[] fromSource = findFrom(v, w);
-        int[] fromSink = findFrom(vRev, wRev);
-        int[] lengths = new int[fromSource.length];
-        for (int i = 1; i < lengths.length; ++i) {
-            length = fromSource[i] + fromSink[lengths.length - i];
+        int[] fromSource = findFrom(v, w.substring(0, middle + 1));
+        int[] fromSink = findFrom(vRev, wRev.substring(0, middle + ((wLen & 1) == 0 ? 0 : 1)));
+        for (int i = 1; i <= vLen; ++i) {
+            length = fromSource[i] + fromSink[vLen - i + 1];
             if (length > maxLength) {
                 maxLength = length;
                 iFrom = i - 1;
             }
         }
 
-        int vIndex = aminoAcidToIndex(vRev.charAt(iFrom)),
-                wIndex = aminoAcidToIndex(wRev.charAt(jFrom));
-        if (fromSink[iFrom + 1] == (fromSinkPrev[iFrom] + BLOSUM62[vIndex][wIndex])) {
+        int vIndex = aminoAcidToIndex(v.charAt(iFrom)),
+                wIndex = aminoAcidToIndex(w.charAt(jFrom));
+        int indexMax = vLen - iFrom;
+        if (fromSink[indexMax] == (fromSinkPrev[indexMax - 1] + BLOSUM62[vIndex][wIndex])) {
             iTo = iFrom + 1;
             jTo = jFrom + 1;
-        } else if (fromSink[iFrom + 1] == (fromSink[iFrom] - indelPenalty)) {
+        } else if (fromSink[indexMax] == (fromSink[indexMax - 1] - indelPenalty)) {
             iTo = iFrom + 1;
             jTo = jFrom;
-        } else if (fromSink[iFrom + 1] == (fromSinkPrev[iFrom + 1] - indelPenalty)) {
+        } else if (fromSink[indexMax] == (fromSinkPrev[indexMax] - indelPenalty)) {
             iTo = iFrom;
             jTo = jFrom + 1;
         }
