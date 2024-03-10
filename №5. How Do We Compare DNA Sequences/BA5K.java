@@ -25,14 +25,14 @@
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class BA5K {
 
     private static final int indelPenalty = 5;
-    private static int[] fromSinkPrev;
+//    private static int[] fromSinkPrev;
+    private static char[] backtrack;
     private static final int[][] BLOSUM62 = new int[][]{
             new int[]{ 4,  0, -2, -1, -2,  0, -2, -1, -1, -1, -1, -2, -1, -1, -1,  1,  0,  0, -3, -2},
             new int[]{ 0,  9, -3, -4, -2, -3, -3, -1, -3, -1, -1, -3, -3, -3, -3, -1, -1, -1, -2, -2},
@@ -70,19 +70,31 @@ public class BA5K {
         int vLen = v.length(), wLen = w.length();
         int vIndex, wIndex;
         int[] cur, next = new int[vLen + 1];
+        backtrack = new char[vLen + 1];
+        backtrack[0] = 'i';
+        for (int i = 1; i <= vLen; ++i) {
+            next[i] = next[i - 1] - indelPenalty;
+        }
 
         for (int i = 0; i < wLen; ++i) {
             cur = Arrays.copyOf(next, next.length);
-            if (i == wLen - 1) {
-                fromSinkPrev = cur;
-            }
             wIndex = aminoAcidToIndex(w.charAt(i));
+            next[0] = cur[0] - indelPenalty;
             for (int j = 1; j <= vLen; ++j) {
                 vIndex = aminoAcidToIndex(v.charAt(j - 1));
                 next[j] = Math.max(
                         Math.max(next[j - 1] - indelPenalty, cur[j] - indelPenalty),
                         cur[j - 1] + BLOSUM62[vIndex][wIndex]
                 );
+                if (i == wLen - 1) {
+                    if (next[j] == cur[j - 1] + BLOSUM62[vIndex][wIndex]) {
+                        backtrack[j] = 'm';
+                    } else if (next[j] == next[j - 1] - indelPenalty) {
+                        backtrack[j] = 'd';
+                    } else if (next[j] == cur[j] - indelPenalty) {
+                        backtrack[j] = 'i';
+                    }
+                }
             }
         }
 
@@ -91,35 +103,33 @@ public class BA5K {
 
     private static List<Integer> findMiddleEdgeMachinery(String v, String w) {
         int vLen = v.length(), wLen = w.length(), middle = wLen / 2;
-        int iFrom = 0, jFrom = middle, iTo = 0, jTo = 0,
-                length, maxLength = Integer.MIN_VALUE;
-        String vRev = new StringBuilder(v).reverse().toString(),
-                wRev = new StringBuilder(w).reverse().toString();
-        int[] fromSource = findFrom(v, w.substring(0, middle + 1));
-        int[] fromSink = findFrom(vRev, wRev.substring(0, middle + ((wLen & 1) == 0 ? 0 : 1)));
-        for (int i = 1; i <= vLen; ++i) {
-            length = fromSource[i] + fromSink[vLen - i + 1];
-            if (length > maxLength) {
-                maxLength = length;
-                iFrom = i - 1;
+        int iFrom = 0, jFrom = middle, iTo = 0, jTo = 0;
+        int maxScore = Integer.MIN_VALUE, score;
+        String vRev = new StringBuilder(v).reverse().toString();
+        String wRev = new StringBuilder(w).reverse().toString();
+        int[] fromSource = findFrom(v, w.substring(0, middle));
+        int[] fromSink = findFrom(vRev, wRev.substring(0, wLen - middle));
+        for (int i = 0; i <= vLen; ++i) {
+            score = fromSource[i] + fromSink[vLen - i];
+            if (score > maxScore) {
+                maxScore = score;
+                iFrom = i;
             }
         }
 
-        int vIndex = aminoAcidToIndex(v.charAt(iFrom)),
-                wIndex = aminoAcidToIndex(w.charAt(jFrom));
-        int indexMax = vLen - iFrom;
-        if (fromSink[indexMax] == (fromSinkPrev[indexMax - 1] + BLOSUM62[vIndex][wIndex])) {
+        int maxIndex = vLen - iFrom;
+        if (backtrack[maxIndex] == 'm') {
             iTo = iFrom + 1;
             jTo = jFrom + 1;
-        } else if (fromSink[indexMax] == (fromSink[indexMax - 1] - indelPenalty)) {
+        } else if (backtrack[maxIndex] == 'd') {
             iTo = iFrom + 1;
             jTo = jFrom;
-        } else if (fromSink[indexMax] == (fromSinkPrev[indexMax] - indelPenalty)) {
+        } else if (backtrack[maxIndex] == 'i') {
             iTo = iFrom;
             jTo = jFrom + 1;
         }
 
-        return new ArrayList<>(List.of(iFrom, jFrom, iTo, jTo));
+        return List.of(iFrom, jFrom, iTo, jTo);
     }
 
     public static List<Integer> findMiddleEdge(String v, String w) {
