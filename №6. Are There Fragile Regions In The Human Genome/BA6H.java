@@ -43,7 +43,7 @@ import java.util.Map;
 
 public class BA6H {
 
-    private List<Map.Entry<Integer, Integer>> coloredEdgesMachinery(List<List<Integer>> genome) {
+    private static List<Map.Entry<Integer, Integer>> coloredEdgesMachinery(List<List<Integer>> genome) {
         List<Integer> cycle;
         int chromosomeSize;
         List<Map.Entry<Integer, Integer>> edges = new ArrayList<>();
@@ -62,11 +62,11 @@ public class BA6H {
         return edges;
     }
 
-    public List<Map.Entry<Integer, Integer>> coloredEdges(List<List<Integer>> genome) {
+    public static List<Map.Entry<Integer, Integer>> coloredEdges(List<List<Integer>> genome) {
         return coloredEdgesMachinery(genome);
     }
 
-    public List<Map.Entry<Integer, Integer>> coloredEdges(Path path) {
+    public static List<Map.Entry<Integer, Integer>> coloredEdges(Path path) {
         String strGenome = UTIL.readDataset(path).getFirst();
         int lParenIndex, rParenIndex;
         List<List<Integer>> genome = new ArrayList<>();
