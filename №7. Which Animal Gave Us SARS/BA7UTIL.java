@@ -1,7 +1,6 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 public class BA7UTIL {
 
@@ -27,5 +26,19 @@ public class BA7UTIL {
         }
 
         return adjList;
+    }
+
+    public static <T> void writeToFile(String filename, Collection<T> elems) {
+        try (FileWriter fileWriter = new FileWriter(filename)) {
+            int i = 0, elemsSize = elems.size();
+            for (T elem : elems) {
+                fileWriter.write("%s%c".formatted(
+                        elem, (i == elemsSize - 1) ? '\n' : ' '
+                ));
+                ++i;
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 }
