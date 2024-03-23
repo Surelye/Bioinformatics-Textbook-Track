@@ -41,4 +41,20 @@ public class BA7UTIL {
             System.out.println("Failed to write to file");
         }
     }
+
+    public static void
+    writeAdjListToFile(String filename, Map<Integer, Map<Integer, Integer>> adjList) {
+        try (FileWriter fileWriter = new FileWriter(filename)) {
+            int numNodes = adjList.size();
+            for (int from = 0; from < numNodes; ++from) {
+                for (int to : adjList.get(from).keySet()) {
+                    fileWriter.write("%d->%d:%d\n".formatted(
+                            from, to, adjList.get(from).get(to)
+                    ));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
+    }
 }
