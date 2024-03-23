@@ -61,11 +61,50 @@
 // -------------
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 public class BA7C {
 
     private static int internalNode;
+
+    private static boolean
+    dfs(Map<Integer, Map<Integer, Integer>> adjList, Map<Integer, Boolean> visited,
+        int node, int to, List<Integer> path) {
+        if (node == to) {
+            return true;
+        }
+        visited.put(node, true);
+
+        for (int v : adjList.get(node).keySet()) {
+            if (!visited.get(v)) {
+                path.add(v);
+                if (dfs(adjList, visited, v, to, path)) {
+                    return true;
+                }
+                path.removeLast();
+                visited.put(v, false);
+            }
+        }
+
+        return false;
+    }
+
+    private static List<Integer>
+    findPath(Map<Integer, Map<Integer, Integer>> adjList, int from, int to) {
+        List<Integer> path = new ArrayList<>();
+        Map<Integer, Boolean> visited = new HashMap<>();
+        for (int vertex : adjList.keySet()) {
+            visited.put(vertex, false);
+        }
+        if (!dfs(adjList, visited, from, to, path)) {
+            throw new RuntimeException("Path not found");
+        }
+
+        return path;
+    }
 
     private static List<List<Integer>>
     removeRowAndColumn(List<List<Integer>> D, int row, int column) {
@@ -107,7 +146,7 @@ public class BA7C {
         }
 
         int iLeaf, kLeaf, dik, din, dnk, x;
-        iLeaf = kLeaf = dik = din = dnk = x = 0;
+        iLeaf = kLeaf = 0;
         outerCycle:
         for (int i = 0; i != n - 1; ++i) {
             for (int k = 0; k != n - 1; ++k) {
@@ -128,44 +167,31 @@ public class BA7C {
 
         D = removeRowAndColumn(D, n - 1, n - 1);
         var T = findAdditivePhylogenyMachinery(n - 1, D);
-        if (T.get(iLeaf).containsKey(kLeaf)) {
-            dik = T.get(iLeaf).get(kLeaf);
-            if (dik > x) {
-                T.get(iLeaf).remove(kLeaf);
-                T.get(kLeaf).remove(iLeaf);
-                T.get(iLeaf).put(internalNode, x);
-                T.get(kLeaf).put(internalNode, dik - x);
-                T.put(internalNode, new HashMap<>(
-                        Map.of(
-                                iLeaf, x,
-                                kLeaf, dik - x,
-                                n - 1, limbLength
-                        )
-                ));
+        List<Integer> path = findPath(T, iLeaf, kLeaf);
+        int pathLength = 0, segmentLength, curNode = iLeaf;
+        for (int pathNode : path) {
+            segmentLength = T.get(curNode).get(pathNode);
+            if (pathLength + segmentLength == x) {
+                T.get(pathNode).put(n - 1, limbLength);
+                T.put(n - 1, new HashMap<>(Map.of(pathNode, limbLength)));
+                break;
+            } else if (pathLength + segmentLength > x) {
+                int diff = x - pathLength;
+                T.get(curNode).remove(pathNode);
+                T.get(pathNode).remove(curNode);
+                T.get(curNode).put(internalNode, diff);
+                T.get(pathNode).put(internalNode, segmentLength - diff);
+                T.put(internalNode, new HashMap<>(Map.of(
+                        curNode, diff,
+                        pathNode, segmentLength - diff,
+                        n - 1, limbLength
+                )));
+                T.put(n - 1, new HashMap<>(Map.of(internalNode++, limbLength)));
+                break;
             }
-        } else {
-            int nNode = T.get(kLeaf).keySet().iterator().next();
-            if (!(T.get(iLeaf).get(nNode) == din && T.get(kLeaf).get(nNode) == dnk)) {
-                int curDnk = T.get(kLeaf).get(nNode);
-                T.get(nNode).remove(kLeaf);
-                T.get(kLeaf).remove(nNode);
-                T.get(nNode).put(internalNode, curDnk - dnk);
-                T.get(kLeaf).put(internalNode, dnk);
-                T.put(internalNode, new HashMap<>(
-                        Map.of(
-                                kLeaf, dnk,
-                                n - 1, limbLength,
-                                nNode, curDnk - dnk
-                        )
-                ));
-            } else {
-                T.put(n - 1, new HashMap<>(Map.of(nNode, limbLength)));
-                T.get(nNode).put(n - 1, limbLength);
-
-                return T;
-            }
+            curNode = pathNode;
+            pathLength += segmentLength;
         }
-        T.put(n - 1, new HashMap<>(Map.of(internalNode++, limbLength)));
 
         return T;
     }
