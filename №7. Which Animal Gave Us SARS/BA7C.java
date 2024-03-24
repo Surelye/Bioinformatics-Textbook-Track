@@ -106,27 +106,14 @@ public class BA7C {
         return path;
     }
 
-    private static List<List<Integer>>
-    removeRowAndColumn(List<List<Integer>> D, int row, int column) {
+    private static void
+    removeLastRowAndColumn(List<List<Integer>> D) {
         int DSize = D.size();
-        List<Integer> currentRow;
-        List<List<Integer>> newD = new ArrayList<>();
 
-        for (int i = 0; i != DSize; ++i) {
-            currentRow = new ArrayList<>();
-            if (i == row) {
-                continue;
-            }
-            for (int j = 0; j != DSize; ++j) {
-                if (j == column) {
-                    continue;
-                }
-                currentRow.add(D.get(i).get(j));
-            }
-            newD.add(currentRow);
+        for (int i = 0; i != DSize - 1; ++i) {
+            D.set(i, D.get(i).subList(0, DSize - 1));
         }
-
-        return newD;
+        D.removeLast();
     }
 
     private static Map<Integer, Map<Integer, Integer>>
@@ -163,9 +150,12 @@ public class BA7C {
                 }
             }
         }
+        if (iLeaf == 0 && kLeaf == 0) {
+            throw new RuntimeException("Given matrix is not additive");
+        }
         x = D.get(iLeaf).get(n - 1);
 
-        D = removeRowAndColumn(D, n - 1, n - 1);
+        removeLastRowAndColumn(D);
         var T = findAdditivePhylogenyMachinery(n - 1, D);
         List<Integer> path = findPath(T, iLeaf, kLeaf);
         int pathLength = 0, segmentLength, curNode = iLeaf;
