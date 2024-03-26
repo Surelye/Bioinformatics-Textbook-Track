@@ -63,9 +63,11 @@
 // -------------
 
 import auxil.*;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -73,26 +75,16 @@ public class BA7D {
 
     private static int internalNode;
 
-    private static List<List<Integer>>
-    removeRowsAndColumns(List<List<Integer>> D, int ith, int jth) {
-        int DSize = D.size();
-        List<List<Integer>> newD = new ArrayList<>();
-        List<Integer> newRow;
-
-        for (int i = 0; i != DSize; ++i) {
-            newRow = new ArrayList<>();
-            if (i == ith || i == jth) {
-                continue;
-            }
-            for (int j = 0; j != DSize; ++j) {
-                if (j != ith && j != jth) {
-                    newRow.add(D.get(i).get(j));
-                }
-            }
-            newD.add(newRow);
+    private static void
+    addRowAndColumn(Map<Integer, Map<Integer, Double>> D, List<Cluster> clusters, Cluster cluster) {
+        int clusterLabel = cluster.getLabel();
+        Map<Integer, Double> clusterDistances = Cluster.getDistancesBetweenClustersAndCluster(
+                clusters, cluster, D
+        );
+        for (int nodeLabel : clusterDistances.keySet()) {
+            D.get(nodeLabel).put(clusterLabel, clusterDistances.get(nodeLabel));
         }
-
-        return newD;
+        D.put(clusterLabel, clusterDistances);
     }
 
     private static void
@@ -102,53 +94,48 @@ public class BA7D {
         T.get(jClRepr).add(newNode);
     }
 
-    private static void UPGMAMachinery(Map<Integer, Map<Integer, Integer>> D, int n) {
-//        System.out.println(D);
+    private static Map<Node, List<Node>>
+    UPGMAMachinery(Map<Integer, Map<Integer, Double>> D, int n) {
         List<Cluster> clusters = Cluster.initClusters(n);
         Map<Node, List<Node>> T = new HashMap<>();
+        Cluster newCluster;
+        Node innerNode;
         for (int i = 0; i != n; ++i) {
             T.put(new Node(i, 0), new ArrayList<>());
         }
-//        System.out.println(T);
 
         int fLabel, sLabel;
         while (clusters.size() > 1) {
             Pair<Cluster, Cluster> closestClusters = Cluster.getClosestClusters(clusters, D);
             fLabel = closestClusters.getFirst().getLabel();
             sLabel = closestClusters.getSecond().getLabel();
-//            System.out.println(closestClusters);
-            Node innerNode = new Node(internalNode++, D.get(fLabel).get(sLabel) / 2);
-//            System.out.println(innerNode);
-            Cluster newCluster = Cluster.mergeClusters(
+            innerNode = new Node(internalNode++, D.get(fLabel).get(sLabel) / 2);
+            newCluster = Cluster.mergeClusters(
                     closestClusters.getFirst(),
                     closestClusters.getSecond(),
                     innerNode
             );
-//            System.out.println(newCluster);
             connectNodes(
                     T,
                     innerNode,
                     closestClusters.getFirst().getRepresentative(),
                     closestClusters.getSecond().getRepresentative()
             );
-            System.out.println(T);
-//            D = removeRowsAndColumns(D, fLabel, sLabel);
-//            System.out.println(D);
-//            clusters.remove(closestClusters.getFirst());
-//            clusters.remove(closestClusters.getSecond());
-//            System.out.println(clusters);
-//            System.out.println(Cluster.getClusterDistance(newCluster, clusters.getFirst()));
-//
-            break;
+            clusters.remove(closestClusters.getFirst());
+            clusters.remove(closestClusters.getSecond());
+            addRowAndColumn(D, clusters, newCluster);
+            clusters.add(newCluster);
         }
+
+        return T;
     }
 
-    public static void UPGMA(int n, Map<Integer, Map<Integer, Integer>> D) {
+    public static Map<Node, List<Node>> UPGMA(int n, Map<Integer, Map<Integer, Double>> D) {
         internalNode = n;
-        UPGMAMachinery(D, n);
+        return UPGMAMachinery(D, n);
     }
 
-    public static void UPGMA(Path path) {
+    public static Map<Node, List<Node>> UPGMA(Path path) {
         List<String> strDataset = UTIL.readDataset(path);
         int n = Integer.parseInt(strDataset.getFirst());
         internalNode = n;
@@ -157,25 +144,49 @@ public class BA7D {
                 .skip(1)
                 .map(UTIL::parseIntArray)
                 .toList();
-        Map<Integer, Map<Integer, Integer>> D = new HashMap<>();
+        Map<Integer, Map<Integer, Double>> D = new HashMap<>();
         for (int i = 0; i != n; ++i) {
             D.put(i, new HashMap<>());
             for (int j = 0; j != n; ++j) {
                 if (i != j) {
-                    D.get(i).put(j, DMatrix.get(i).get(j));
+                    D.get(i).put(j, (double) DMatrix.get(i).get(j));
                 }
             }
         }
 
-        UPGMAMachinery(D, n);
+        return UPGMAMachinery(D, n);
     }
 
     private void run() {
-        UPGMA(
+        Map<Node, List<Node>> adjList = UPGMA(
                 Path.of(
                         "C:\\Users\\sgnot\\Downloads\\rosalind_ba7d.txt"
                 )
         );
+        int from, to;
+        double age;
+        List<Edge> edges = new ArrayList<>();
+        for (Node node : adjList.keySet()) {
+            from = node.label();
+            for (Node adj : adjList.get(node)) {
+                to = adj.label();
+                age = Math.abs(node.age() - adj.age());
+                edges.add(new Edge(from, to, age));
+            }
+        }
+        edges.sort(Edge::compareTo);
+
+        try (FileWriter fileWriter = new FileWriter("ba7d_out.txt")) {
+            for (Edge edge : edges) {
+                fileWriter.write("%d->%d:%.3f\n".formatted(
+                        edge.from(),
+                        edge.to(),
+                        edge.weight()
+                ));
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
