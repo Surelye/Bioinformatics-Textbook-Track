@@ -1,27 +1,6 @@
 package auxil;
 
-import java.util.Objects;
-
-public class Node {
-    private final int label;
-    private double age;
-
-    public Node(int label, int weight) {
-        this.label = label;
-        this.age = weight;
-    }
-
-    public int getLabel() {
-        return label;
-    }
-
-    public double getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
+public record Node(int label, double age) {
 
     @Override
     public String toString() {
@@ -37,8 +16,4 @@ public class Node {
         return label == node.label && Double.compare(age, node.age) == 0;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(label, age);
-    }
 }

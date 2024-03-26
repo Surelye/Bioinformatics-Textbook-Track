@@ -1,39 +1,33 @@
 package auxil;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class Cluster {
-    private int label;
-    private final List<Node> nodes;
     private Node representative;
+    private final List<Node> nodes;
 
-    public Cluster(int label) {
-        this.label = label;
+    public Cluster() {
         nodes = new ArrayList<>();
     }
 
-    public Cluster(int label, Node node) {
-        this.label = label;
+    public Cluster(Node node) {
         nodes = new ArrayList<>(List.of(node));
         representative = node;
     }
 
-    public int getLabel() {
-        return label;
-    }
-
-    public void setLabel(int label) {
-        this.label = label;
+    public Node getRepresentative() {
+        return representative;
     }
 
     public List<Node> getNodes() {
         return nodes;
     }
 
-    public Node getRepresentative() {
-        return representative;
+    public int getLabel() {
+        return representative.label();
     }
 
     public int size() {
@@ -43,34 +37,41 @@ public class Cluster {
     public static List<Cluster> initClusters(int n) {
         List<Cluster> clusters = new ArrayList<>();
         for (int i = 0; i != n; ++i) {
-            clusters.add(
-                    new Cluster(
-                            i,
-                            new Node(i, 0)
-                    )
-            );
+            clusters.add(new Cluster(new Node(i, 0)));
         }
 
         return clusters;
     }
 
     public static double
-    getClusterDistance(Cluster f, Cluster s, Map<Integer, Map<Integer, Integer>> D) {
+    getClusterDistance(Cluster f, Cluster s, Map<Integer, Map<Integer, Double>> D) {
         double dist = 0;
         int outerLabel;
 
         for (Node fCNode : f.getNodes()) {
-            outerLabel = fCNode.getLabel();
+            outerLabel = fCNode.label();
             for (Node sCNode : s.getNodes()) {
-                dist += D.get(outerLabel).get(sCNode.getLabel());
+                dist += D.get(outerLabel).get(sCNode.label());
             }
         }
 
         return dist / (f.size() * s.size());
     }
 
+    public static Map<Integer, Double>
+    getDistancesBetweenClustersAndCluster(
+            List<Cluster> clusters, Cluster cluster,
+            Map<Integer, Map<Integer, Double>> D) {
+        Map<Integer, Double> distances = new HashMap<>();
+        for (Cluster cl : clusters) {
+            distances.put(cl.getLabel(), getClusterDistance(cl, cluster, D));
+        }
+
+        return distances;
+    }
+
     public static Pair<Cluster, Cluster>
-    getClosestClusters(List<Cluster> clusters, Map<Integer, Map<Integer, Integer>> D) {
+    getClosestClusters(List<Cluster> clusters, Map<Integer, Map<Integer, Double>> D) {
         if (clusters.size() < 2) {
             throw new RuntimeException("Incorrect number of clusters");
         }
@@ -96,7 +97,7 @@ public class Cluster {
     }
 
     public static Cluster mergeClusters(Cluster fCluster, Cluster sCluster, Node representative) {
-        Cluster newCluster = new Cluster(representative.getLabel());
+        Cluster newCluster = new Cluster();
 
         for (Node fClusterNode : fCluster.getNodes()) {
             newCluster.getNodes().add(fClusterNode);
@@ -121,7 +122,7 @@ public class Cluster {
             }
         }
 
-        return "Cluster{label=%d, {%s}, representative=%s}"
-                .formatted(label, str, representative);
+        return "Cluster{representative=%s, {%s}}"
+                .formatted(representative, str);
     }
 }
