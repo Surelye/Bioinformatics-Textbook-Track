@@ -61,13 +61,13 @@
 // 5->4:2.000
 // -------------
 
-public class BA7E {
+class BA7E {
 
     private void run() {
 
     }
 
     public static void main(String[] args) {
-
+        new BA7E().run();
     }
 }
