@@ -61,10 +61,186 @@
 // 5->4:2.000
 // -------------
 
+import auxil.Pair;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
 class BA7E {
 
-    private void run() {
+    private static int internalNode;
 
+    private static Map<Integer, Double>
+    computeTotalDistances(Map<Integer, Map<Integer, Double>> D) {
+        double distance;
+        Map<Integer, Double> totalDistances = new HashMap<>(D.size());
+
+        for (int node : D.keySet()) {
+            distance = 0;
+            for (int adj : D.get(node).keySet()) {
+                distance += D.get(node).get(adj);
+            }
+            totalDistances.put(node, distance);
+        }
+
+        return totalDistances;
+    }
+
+    private static Map<Integer, Map<Integer, Double>>
+    constructNeighborJoiningMatrix(
+            Map<Integer, Map<Integer, Double>> D,
+            Map<Integer, Double> distances) {
+        int n = D.size();
+        double val;
+        Map<Integer, Map<Integer, Double>> njMatrix = new HashMap<>(n);
+        for (int node : D.keySet()) {
+            njMatrix.put(node, new HashMap<>());
+        }
+
+        for (int node : D.keySet()) {
+            for (int adj : D.get(node).keySet()) {
+                if (njMatrix.get(node).containsKey(adj)) {
+                    continue;
+                }
+                val = (n - 2) * D.get(node).get(adj) - distances.get(node) - distances.get(adj);
+                njMatrix.get(node).put(adj, val);
+                njMatrix.get(adj).put(node, val);
+            }
+        }
+
+        return njMatrix;
+    }
+
+    private static Pair<Integer, Integer>
+    findMinimumInNJMatrix(Map<Integer, Map<Integer, Double>> njMatrix) {
+        int defaultNode = njMatrix.keySet().iterator().next();
+        Pair<Integer, Integer> minIndices = new Pair<>(defaultNode, defaultNode);
+        double min = Double.MAX_VALUE, cur;
+
+        for (int node : njMatrix.keySet()) {
+            for (int adj : njMatrix.get(node).keySet()) {
+                cur = njMatrix.get(node).get(adj);
+                if (cur < min) {
+                    min = cur;
+                    minIndices.setBoth(node, adj);
+                }
+            }
+        }
+
+        return minIndices;
+    }
+
+    private static void addNewRowAndColumn(Map<Integer, Map<Integer, Double>> D, int i, int j) {
+        double dkm, dki, dkj, dij = D.get(i).get(j);
+        Map<Integer, Double> distances = new HashMap<>(D.size() - 2);
+
+        for (int node : D.keySet()) {
+            if (node != i && node != j) {
+                dki = D.get(node).get(i);
+                dkj = D.get(node).get(j);
+                dkm = (dki + dkj - dij) / 2;
+                distances.put(node, dkm);
+                D.get(node).put(internalNode, dkm);
+            }
+        }
+        D.put(internalNode, distances);
+    }
+
+    private static void removeRowsAndColumns(Map<Integer, Map<Integer, Double>> D, int i, int j) {
+        D.remove(i);
+        D.remove(j);
+
+        for (int node : D.keySet()) {
+            D.get(node).remove(i);
+            D.get(node).remove(j);
+        }
+    }
+
+    private static void addNewLimbs(
+            Map<Integer, Map<Integer, Double>> T, int node,
+            int limbI, double limbLenI, int limbJ, double limbLenJ) {
+        T.get(node).putAll(Map.of(limbI, limbLenI, limbJ, limbLenJ));
+        T.put(limbI, new HashMap<>(Map.of(node, limbLenI)));
+        T.put(limbJ, new HashMap<>(Map.of(node, limbLenJ)));
+    }
+
+    private static Map<Integer, Map<Integer, Double>>
+    neighborJoiningMachinery(Map<Integer, Map<Integer, Double>> D, int n) {
+        if (n == 2) {
+            var key = D.keySet().iterator();
+            int node1 = key.next(), node2 = key.next();
+            double edgeWeight = D.get(node1).get(node2);
+
+            return new HashMap<>(Map.of(
+                    node1, new HashMap<>(Map.of(node2, edgeWeight)),
+                    node2, new HashMap<>(Map.of(node1, edgeWeight))
+            ));
+        }
+
+        Map<Integer, Double> distances = computeTotalDistances(D);
+        Map<Integer, Map<Integer, Double>> njMatrix = constructNeighborJoiningMatrix(D, distances);
+        Pair<Integer, Integer> iAndJ = findMinimumInNJMatrix(njMatrix);
+        int i = iAndJ.getFirst(), j = iAndJ.getSecond();
+        double delta = (distances.get(i) - distances.get(j)) / (n - 2);
+        double limbLenI = (D.get(i).get(j) + delta) / 2, limbLenJ = (D.get(i).get(j) - delta) / 2;
+        addNewRowAndColumn(D, i, j);
+        removeRowsAndColumns(D, i, j);
+        int m = internalNode++;
+        var T = neighborJoiningMachinery(D, n - 1);
+        addNewLimbs(T, m, i, limbLenI, j, limbLenJ);
+
+        return T;
+    }
+
+    public static Map<Integer, Map<Integer, Double>>
+    neighborJoining(Map<Integer, Map<Integer, Double>> D, int n) {
+        internalNode = n;
+        return neighborJoiningMachinery(D, n);
+    }
+
+    public static Map<Integer, Map<Integer, Double>> neighborJoining(Path path) {
+        List<String> strDataset = UTIL.readDataset(path);
+        int n = Integer.parseInt(strDataset.getFirst());
+        internalNode = n;
+        Map<Integer, Map<Integer, Double>> D = new HashMap<>();
+        List<Integer> row;
+
+        for (int i = 0; i != n; ++i) {
+            D.put(i, new HashMap<>());
+            row = UTIL.parseIntArray(strDataset.get(i + 1));
+            for (int j = 0; j != n; ++j) {
+                if (i != j) {
+                    D.get(i).put(j, ((double) row.get(j)));
+                }
+            }
+        }
+
+        return neighborJoiningMachinery(D, n);
+    }
+
+    private void run() {
+        var adjList = neighborJoining(
+                Path.of(
+                        "C:\\Users\\sgnot\\Downloads\\rosalind_ba7e.txt"
+                )
+        );
+
+        try (FileWriter fileWriter = new FileWriter("ba7e_out.txt")) {
+            int numNodes = adjList.size();
+            for (int node = 0; node != numNodes; ++node) {
+                for (int adj : adjList.get(node).keySet()) {
+                    fileWriter.write("%d->%d:%.3f\n".formatted(
+                            node, adj, adjList.get(node).get(adj)
+                    ));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
