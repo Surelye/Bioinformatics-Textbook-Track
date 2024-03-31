@@ -25,6 +25,11 @@ public class Pair<T, V> {
         this.second = second;
     }
 
+    public void setBoth(T first, V second) {
+        this.first = first;
+        this.second = second;
+    }
+
     @Override
     public String toString() {
         return "Pair{first=%s, second=%s}"
