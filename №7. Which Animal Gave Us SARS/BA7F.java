@@ -97,7 +97,7 @@ public class BA7F {
 
     private static SPNode findRipe(SPGraph T) {
         next:
-        for (SPNode node : T.getNodes()) {
+        for (SPNode node : T.nodes()) {
             if (node.isTagged()) {
                 continue;
             }
@@ -170,7 +170,7 @@ public class BA7F {
     }
 
     private static void assignSymbols(SPGraph T) {
-        int rootIndex = T.getNodes().getLast().getIndex();
+        int rootIndex = T.nodes().getLast().getIndex();
         int charIndex = findMinAtIndices(T.getNode(rootIndex).getScores()).getValue().getFirst();
         T.getNode(rootIndex).getDNA().append(indexToNucleotide(charIndex));
 
@@ -183,7 +183,7 @@ public class BA7F {
         List<Integer> dIndices, sIndices;
         int sumMins, minEachSymbol;
 
-        for (SPNode node : T.getNodes()) {
+        for (SPNode node : T.nodes()) {
             node.untag();
             node.getScores().clear();
             if (node.isLeaf()) {
@@ -219,7 +219,7 @@ public class BA7F {
         }
         assignSymbols(T);
 
-        return T.getNodes().getLast()
+        return T.nodes().getLast()
                 .getScores()
                 .stream()
                 .min(Integer::compare)
@@ -290,7 +290,7 @@ public class BA7F {
             int parsimonyScore = scoreAndT.getKey();
             SPGraph T = scoreAndT.getValue();
             fileWriter.write("%d\n".formatted(parsimonyScore));
-            for (SPNode node : T.getNodes()) {
+            for (SPNode node : T.nodes()) {
                 fDNA = node.getDNA().toString();
                 for (SPNode adj : T.getAdjacents(node.getIndex())) {
                     sDNA = adj.getDNA().toString();
