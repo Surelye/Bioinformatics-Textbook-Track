@@ -5,19 +5,7 @@ import java.util.Map;
 
 // SPGraph stands for Small Parsimony Graph
 
-public class SPGraph {
-
-    private final List<SPNode> nodes;
-    private final Map<Integer, List<Integer>> adjList;
-
-    public SPGraph(List<SPNode> nodes, Map<Integer, List<Integer>> adjList) {
-        this.nodes = nodes;
-        this.adjList = adjList;
-    }
-
-    public List<SPNode> getNodes() {
-        return nodes;
-    }
+public record SPGraph(List<SPNode> nodes, Map<Integer, List<Integer>> adjList) {
 
     public SPNode getNode(int i) {
         return nodes.get(i);
