@@ -74,7 +74,7 @@ public class BA7G {
         T.adjList().get(lastFrom).add(lastTo);
     }
 
-    public Map.Entry<Integer, SPGraph> smallParsimonyUnrooted(Path path) {
+    public static Map.Entry<Integer, SPGraph> smallParsimonyUnrooted(Path path) {
         List<String> strDataset = UTIL.readDataset(path);
         int n = Integer.parseInt(strDataset.getFirst());
         List<SPNode> nodes = new ArrayList<>(n << 1);
