@@ -73,13 +73,84 @@
 // 0.0 5.0
 // -------------
 
+import auxil.Point;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.ArrayList;
+
 public class BA8A {
 
-    private void run() {
+    private static Point getPointMaximizingDistance(List<Point> points, List<Point> centers) {
+        Point maximizingPoint = points.getFirst();
+        double maxDist = Double.MIN_VALUE, curDist;
 
+        for (Point point : points) {
+            curDist = BA8UTIL.getDistanceFromPointToCenters(point, centers);
+            if (curDist > maxDist) {
+                maximizingPoint = point;
+                maxDist = curDist;
+            }
+        }
+
+        return maximizingPoint;
+    }
+
+    private static List<Point> farthestFirstTraversalMachinery(List<Point> points, int k) {
+        List<Point> centers = new ArrayList<>(List.of(points.getFirst()));
+        points.remove(centers.getLast());
+
+        while (centers.size() < k) {
+            Point dataPoint = getPointMaximizingDistance(points, centers);
+            centers.add(dataPoint);
+            points.remove(centers.getLast());
+        }
+
+        return centers;
+    }
+
+    public static List<Point> farthestFirstTraversal(List<Point> points, int k) {
+        return farthestFirstTraversalMachinery(points, k);
+    }
+
+    public List<Point> farthestFirstTraversal(Path path) {
+        List<String> strDataset = UTIL.readDataset(path);
+        int k = Integer.parseInt(strDataset.getFirst().split("\\s+")[0]);
+        List<Point> points = new ArrayList<>(strDataset.size());
+
+        for (int i = 1; i != strDataset.size(); ++i) {
+            points.add(new Point(strDataset.get(i)));
+        }
+
+        return farthestFirstTraversalMachinery(points, k);
+    }
+
+    private void run() {
+        List<Point> centers = farthestFirstTraversal(
+                Path.of(
+                        "C:\\Users\\sgnot\\Downloads\\rosalind_ba8a.txt"
+                )
+        );
+
+        try (FileWriter fileWriter = new FileWriter("ba8a_out.txt")) {
+            int dimension = centers.getFirst().size();
+            for (Point point : centers) {
+                for (int i = 0; i != dimension; ++i) {
+                    fileWriter.write("%.1f%c".formatted(
+                            point.getNth(i),
+                            (i == dimension - 1) ? '\n' : ' ')
+                    );
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
+        new BA8A().run();
 
     }
 }
