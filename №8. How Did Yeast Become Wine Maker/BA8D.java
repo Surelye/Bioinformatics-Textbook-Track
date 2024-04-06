@@ -71,7 +71,24 @@
 // 1.075 1.148
 // -------------
 
+import auxil.Point;
+
+import java.nio.file.Path;
+import java.util.List;
+
 public class BA8D {
+
+    private static List<Point> softKMeansClusteringMachinery() {
+        
+    }
+
+    public static List<Point> softKMeansClustering() {
+
+    }
+
+    public static List<Point> softKMeansClustering(Path path) {
+
+    }
 
     private void run() {
 
