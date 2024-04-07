@@ -73,28 +73,137 @@
 
 import auxil.Point;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.ArrayList;
 
 public class BA8D {
 
-    private static List<Point> softKMeansClusteringMachinery() {
-        
+    private static double
+    computeHiddenMatrixDenom(List<List<Double>> distances, double beta, int i, int j) {
+        double denom = 0;
+
+        for (int iPrime = 0; iPrime != distances.size(); ++iPrime) {
+            if (iPrime == i) {
+                continue;
+            }
+            denom += Math.exp(-beta * distances.get(iPrime).get(j));
+        }
+
+        return denom;
     }
 
-    public static List<Point> softKMeansClustering() {
+    private static List<List<Double>>
+    centersToSoftClusters(List<Point> centers, List<Point> points, double beta) {
+        int nCenters = centers.size(), nPoints = points.size();
+        double numer, denom;
+        List<List<Double>> mutualDistances = BA8UTIL.getMutualDistance(centers, points);
+        List<List<Double>> hiddenMatrix = new ArrayList<>(nCenters);
+        for (int i = 0; i != nCenters; ++i) {
+            hiddenMatrix.add(new ArrayList<>(nPoints));
+        }
 
+        for (int i = 0; i != nCenters; ++i) {
+            for (int j = 0; j != nPoints; ++j) {
+                numer = Math.exp(-beta * mutualDistances.get(i).get(j));
+                denom = numer + computeHiddenMatrixDenom(mutualDistances, beta, i, j);
+                hiddenMatrix.get(i).add(numer / denom);
+            }
+        }
+
+        return hiddenMatrix;
+    }
+
+    private static double dot(List<List<Double>> hiddenMatrix, int i, List<Point> data, int j) {
+        return BA8UTIL.dot(
+                hiddenMatrix.get(i),
+                data.stream()
+                        .map(point -> point.getNth(j))
+                        .toList()
+        );
+    }
+
+    private static List<Point>
+    softClustersToCenters(List<Point> data, List<List<Double>> hiddenMatrix) {
+        int k = hiddenMatrix.size(), m = data.getFirst().size();
+        double sumHMRow, coordinate;
+        List<Double> coordinates;
+        List<Point> centers = new ArrayList<>(k);
+
+        for (int i = 0; i != k; ++i) {
+            coordinates = new ArrayList<>(m);
+            sumHMRow = hiddenMatrix.get(i)
+                    .stream()
+                    .mapToDouble(x -> x)
+                    .sum();
+            for (int j = 0; j != m; ++j) {
+                coordinate = dot(hiddenMatrix, i, data, j);
+                coordinates.add(coordinate / sumHMRow);
+            }
+            centers.add(new Point(coordinates));
+        }
+
+        return centers;
+    }
+
+    private static List<Point> softKMeansClusteringMachinery(List<Point> points, int k, double beta) {
+        final int NUM_STEPS = 100;
+        List<Point> centers = new ArrayList<>(k);
+        for (int i = 0; i != k; ++i) {
+            centers.add(points.get(i));
+        }
+        List<List<Double>> hiddenMatrix;
+
+        for (int i = 0; i != NUM_STEPS; ++i) {
+            hiddenMatrix = centersToSoftClusters(centers, points, beta);
+            centers = softClustersToCenters(points, hiddenMatrix);
+        }
+
+        return centers;
+    }
+
+    public static List<Point> softKMeansClustering(List<Point> points, int k, double beta) {
+        return softKMeansClusteringMachinery(points, k, beta);
     }
 
     public static List<Point> softKMeansClustering(Path path) {
+        List<String> strDataset = UTIL.readDataset(path);
+        int k = Integer.parseInt(strDataset.getFirst().split("\\s+")[0]);
+        double beta = Double.parseDouble(strDataset.get(1));
+        List<Point> points = new ArrayList<>(strDataset.size());
 
+        for (int i = 2; i != strDataset.size(); ++i) {
+            points.add(new Point(strDataset.get(i)));
+        }
+
+        return softKMeansClusteringMachinery(points, k, beta);
     }
 
     private void run() {
+        List<Point> centers = softKMeansClustering(
+                Path.of(
+                        "C:\\Users\\sgnot\\Downloads\\rosalind_ba8d.txt"
+                )
+        );
 
+        try (FileWriter fileWriter = new FileWriter("ba8d_out.txt")) {
+            int m = centers.getFirst().size();
+            for (Point center : centers) {
+                for (int i = 0; i != m; ++i) {
+                    fileWriter.write("%.3f%c".formatted(
+                            center.getNth(i),
+                            (i == m - 1) ? '\n' : ' '
+                    ));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
-
+        new BA8D().run();
     }
 }
