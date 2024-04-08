@@ -69,13 +69,108 @@
 // 1 2 5 7 3 4 6
 // -------------
 
+import auxil.HCluster;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+
 public class BA8E {
 
-    private void run() {
+    private static int internalNode;
 
+    private static void addRowAndColumn(
+            Map<Integer, Map<Integer, Double>> D, List<HCluster> clusters, HCluster cluster
+    ) {
+        int clusterLabel = cluster.getLabel();
+        Map<Integer, Double> clusterDistances = HCluster.getDistancesBetweenClustersAndCluster(
+                clusters, cluster, D
+        );
+        for (int node : clusterDistances.keySet()) {
+            D.get(node).put(clusterLabel, clusterDistances.get(node));
+        }
+        D.put(clusterLabel, clusterDistances);
+    }
+
+    private static List<HCluster>
+    hierarchicalClusteringMachinery(Map<Integer, Map<Integer, Double>> D, int n) {
+        List<HCluster> clusters = HCluster.initClusters(n);
+        List<HCluster> newlyCreatedClusters = new ArrayList<>();
+        HCluster fCluster, sCluster, newCluster;
+
+        while (clusters.size() > 1) {
+            Map.Entry<HCluster, HCluster> closestClusters = HCluster.getClosestClusters(clusters, D);
+            fCluster = closestClusters.getKey();
+            sCluster = closestClusters.getValue();
+            newCluster = HCluster.mergeClusters(fCluster, sCluster, internalNode++);
+            newlyCreatedClusters.add(newCluster);
+            clusters.remove(fCluster);
+            clusters.remove(sCluster);
+            addRowAndColumn(D, clusters, newCluster);
+            clusters.add(newCluster);
+        }
+
+        return newlyCreatedClusters;
+    }
+
+    public static List<HCluster> hierarchicalClustering(
+            Map<Integer, Map<Integer, Double>> D, int n
+    ) {
+        return hierarchicalClusteringMachinery(D, n);
+    }
+
+    public static List<HCluster> hierarchicalClustering(Path path) {
+        List<String> strDataset = UTIL.readDataset(path);
+        int n = Integer.parseInt(strDataset.getFirst());
+        internalNode = n;
+        List<List<Double>> DMatrix = strDataset
+                .stream()
+                .skip(1)
+                .map(str -> BA8UTIL.parseDoubleArray(str, "\\s+"))
+                .toList();
+        Map<Integer, Map<Integer, Double>> D = new HashMap<>();
+        for (int i = 0; i != n; ++i) {
+            D.put(i, new HashMap<>());
+            for (int j = 0; j != n; ++j) {
+                if (i != j) {
+                    D.get(i).put(j, DMatrix.get(i).get(j));
+                }
+            }
+        }
+
+        return hierarchicalClusteringMachinery(D, n);
+    }
+
+    private void run() {
+        List<HCluster> newlyCreatedClusters = hierarchicalClustering(
+                Path.of(
+                        "C:\\Users\\sgnot\\Downloads\\rosalind_ba8e.txt"
+                )
+        );
+
+        try (FileWriter fileWriter = new FileWriter("ba8e_out.txt")) {
+            int clusterSize;
+            List<Integer> nodes;
+            for (HCluster cluster : newlyCreatedClusters) {
+                nodes = cluster.getNodes();
+                clusterSize = cluster.size();
+                for (int i = 0; i != clusterSize; ++i) {
+                    fileWriter.write("%d%c".formatted(
+                            nodes.get(i) + 1,
+                            (i == clusterSize - 1) ? '\n' : ' '
+                    ));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
-
+        new BA8E().run();
     }
 }
