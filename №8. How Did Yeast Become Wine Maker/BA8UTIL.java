@@ -1,5 +1,6 @@
 import auxil.Point;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.IntStream;
@@ -50,5 +51,12 @@ public class BA8UTIL {
         return IntStream.range(0, lhs.size())
                 .mapToDouble(i -> lhs.get(i) * rhs.get(i))
                 .sum();
+    }
+
+    public static List<Double> parseDoubleArray(String strDoubleArray, String regex) {
+        return Arrays.stream(strDoubleArray
+                .split(regex))
+                .map(Double::parseDouble)
+                .toList();
     }
 }
