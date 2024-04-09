@@ -73,10 +73,69 @@
 // 8->9:T
 // -------------
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
 public class BA9A {
 
-    private void run() {
+    private static Map<Integer, Map<Integer, Character>> constructATrieMachinery(
+            List<String> patterns
+    ) {
+        Map<Integer, Map<Integer, Character>> trie = new HashMap<>(Map.of(0, new HashMap<>()));
+        int newNode = 0, currentNode;
+        char currentSymbol;
 
+        for (String pattern : patterns) {
+            currentNode = 0;
+            for (int i = 0; i != pattern.length(); ++i) {
+                currentSymbol = pattern.charAt(i);
+                if (trie.get(currentNode).containsValue(currentSymbol)) {
+                    currentNode = BA9UTIL.getKeysByValue(trie.get(currentNode), currentSymbol)
+                            .findFirst()
+                            .orElseThrow();
+                } else {
+                    trie.put(++newNode, new HashMap<>());
+                    trie.get(currentNode).put(newNode, currentSymbol);
+                    currentNode = newNode;
+                }
+            }
+        }
+
+        return trie;
+    }
+
+    public static Map<Integer, Map<Integer, Character>> constructATrie(List<String> patterns) {
+        return constructATrieMachinery(patterns);
+    }
+
+    public static Map<Integer, Map<Integer, Character>> constructATrie(Path path) {
+        return constructATrieMachinery(UTIL.readDataset(path));
+    }
+
+    private void run() {
+        Map<Integer, Map<Integer, Character>> trie = constructATrie(
+                Path.of(
+                        "/home/surelye/Downloads/rosalind_files/rosalind_ba9a.txt"
+                )
+        );
+
+        try (FileWriter fileWriter = new FileWriter("ba9a_out.txt")) {
+            for (int from : trie.keySet()) {
+                for (int to : trie.get(from).keySet()) {
+                    fileWriter.write("%d->%d:%c\n".formatted(
+                            from,
+                            to,
+                            trie.get(from).get(to)
+                    ));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
