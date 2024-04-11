@@ -66,17 +66,19 @@
 // $
 // -------------
 
+import auxil.MSuffixTrie;
+
 import java.nio.file.Path;
 
 public class BA9C {
 
     public static void constructSuffixTree(String text) {
-
+        MSuffixTrie trie = BA9UTIL.constructModifiedSuffixTrie(text);
     }
 
     public static void constructSuffixTree(Path path) {
         String text = UTIL.readDataset(path).getFirst();
-        BA9UTIL.constructModifiedSuffixTrie(text);
+        MSuffixTrie trie = BA9UTIL.constructModifiedSuffixTrie(text);
     }
 
     private void run() {
