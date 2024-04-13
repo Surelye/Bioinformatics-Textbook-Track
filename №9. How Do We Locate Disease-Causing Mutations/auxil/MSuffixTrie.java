@@ -39,6 +39,10 @@ public class MSuffixTrie {
         }
     }
 
+    public Map<Node, Edge> get(Node node) {
+        return trie.get(node);
+    }
+
     @Override
     public String toString() {
         return "MSuffixTrie{trie=%s}"
