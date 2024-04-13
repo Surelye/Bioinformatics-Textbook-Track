@@ -67,18 +67,60 @@
 // -------------
 
 import auxil.MSuffixTrie;
+import auxil.Node;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BA9C {
 
-    public static void constructSuffixTree(String text) {
+    private static void dfs(
+            MSuffixTrie trie, Node node, List<Node> currentPath,
+            List<List<Node>> nonBranchingPaths
+    ) {
+        for (Node adj : trie.get(node).keySet()) {
+            if (trie.isLeaf(adj)) {
+                List<Node> nonBranchingPath = new ArrayList<>(currentPath);
+                nonBranchingPath.add(adj);
+                nonBranchingPaths.add(nonBranchingPath);
+                return;
+            } else if (trie.get(adj).size() > 1) {
+                List<Node> nonBranchingPath = new ArrayList<>(currentPath);
+                nonBranchingPath.add(adj);
+                nonBranchingPaths.add(nonBranchingPath);
+                currentPath = new ArrayList<>(List.of(adj));
+                dfs(trie, adj, currentPath, nonBranchingPaths);
+                currentPath.removeLast();
+            } else {
+                currentPath.add(adj);
+                dfs(trie, adj, currentPath, nonBranchingPaths);
+                currentPath.removeLast();
+            }
+        }
+    }
+
+    private static List<List<Node>> getNonBranchingPaths(MSuffixTrie trie) {
+        List<List<Node>> nonBranchingPaths = new ArrayList<>();
+        Node root = new Node(0);
+        List<Node> currentPath = new ArrayList<>(List.of(root));
+        dfs(trie, root, currentPath, nonBranchingPaths);
+
+        return nonBranchingPaths;
+    }
+
+    private static void constructSuffixTreeMachinery(String text) {
         MSuffixTrie trie = BA9UTIL.constructModifiedSuffixTrie(text);
+        List<List<Node>> nonBranchingPaths = getNonBranchingPaths(trie);
+    }
+
+    public static void constructSuffixTree(String text) {
+        constructSuffixTreeMachinery(text);
     }
 
     public static void constructSuffixTree(Path path) {
         String text = UTIL.readDataset(path).getFirst();
-        MSuffixTrie trie = BA9UTIL.constructModifiedSuffixTrie(text);
+        constructSuffixTreeMachinery(text);
     }
 
     private void run() {
