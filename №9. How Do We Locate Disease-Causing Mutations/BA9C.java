@@ -66,14 +66,20 @@
 // $
 // -------------
 
-import auxil.MSuffixTrie;
 import auxil.Node;
+import auxil.MSuffixTrie;
+import auxil.MSuffixTree;
+import auxil.MTreeEdge;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 public class BA9C {
+
+    private static final Node root = new Node(0);
 
     private static void dfs(
             MSuffixTrie trie, Node node, List<Node> currentPath,
@@ -84,14 +90,11 @@ public class BA9C {
                 List<Node> nonBranchingPath = new ArrayList<>(currentPath);
                 nonBranchingPath.add(adj);
                 nonBranchingPaths.add(nonBranchingPath);
-                return;
             } else if (trie.get(adj).size() > 1) {
                 List<Node> nonBranchingPath = new ArrayList<>(currentPath);
                 nonBranchingPath.add(adj);
                 nonBranchingPaths.add(nonBranchingPath);
-                currentPath = new ArrayList<>(List.of(adj));
-                dfs(trie, adj, currentPath, nonBranchingPaths);
-                currentPath.removeLast();
+                dfs(trie, adj, new ArrayList<>(List.of(adj)), nonBranchingPaths);
             } else {
                 currentPath.add(adj);
                 dfs(trie, adj, currentPath, nonBranchingPaths);
@@ -102,33 +105,64 @@ public class BA9C {
 
     private static List<List<Node>> getNonBranchingPaths(MSuffixTrie trie) {
         List<List<Node>> nonBranchingPaths = new ArrayList<>();
-        Node root = new Node(0);
-        List<Node> currentPath = new ArrayList<>();
+        List<Node> currentPath = new ArrayList<>(List.of(root));
         dfs(trie, root, currentPath, nonBranchingPaths);
 
         return nonBranchingPaths;
     }
 
-    private static void constructSuffixTreeMachinery(String text) {
+    private static List<String> constructSuffixTreeMachinery(String text) {
         MSuffixTrie trie = BA9UTIL.constructModifiedSuffixTrie(text);
+        MSuffixTree tree = new MSuffixTree(root);
         List<List<Node>> nonBranchingPaths = getNonBranchingPaths(trie);
+        Node from, to;
+        MTreeEdge edge;
+        int position, length;
+        List<String> edges = new ArrayList<>();
+
+        for (List<Node> path : nonBranchingPaths) {
+            from = path.getFirst();
+            to = path.getLast();
+            position = trie.get(from).get(path.get(1)).getPosition();
+            length = path.size() - 1;
+            edge = new MTreeEdge(position, length);
+            tree.addEdge(from, to, edge);
+        }
+
+        for (Node node : tree.keySet()) {
+            for (Node adj : tree.get(node).keySet()) {
+                edge = tree.get(node).get(adj);
+                position = edge.position();
+                length = edge.length();
+                edges.add(text.substring(position, position + length));
+            }
+        }
+        return edges;
     }
 
-    public static void constructSuffixTree(String text) {
-        constructSuffixTreeMachinery(text);
+    public static List<String> constructSuffixTree(String text) {
+        return constructSuffixTreeMachinery(text);
     }
 
-    public static void constructSuffixTree(Path path) {
+    public static List<String> constructSuffixTree(Path path) {
         String text = UTIL.readDataset(path).getFirst();
-        constructSuffixTreeMachinery(text);
+        return constructSuffixTreeMachinery(text);
     }
 
     private void run() {
-        constructSuffixTree(
+        List<String> edges = constructSuffixTree(
                 Path.of(
                         "/home/surelye/Downloads/rosalind_files/rosalind_ba9c.txt"
                 )
         );
+
+        try (FileWriter fileWriter = new FileWriter("ba9c_out.txt")) {
+            for (String edge : edges) {
+                fileWriter.write("%s\n".formatted(edge));
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
