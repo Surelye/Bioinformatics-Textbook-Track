@@ -103,7 +103,7 @@ public class BA9C {
     private static List<List<Node>> getNonBranchingPaths(MSuffixTrie trie) {
         List<List<Node>> nonBranchingPaths = new ArrayList<>();
         Node root = new Node(0);
-        List<Node> currentPath = new ArrayList<>(List.of(root));
+        List<Node> currentPath = new ArrayList<>();
         dfs(trie, root, currentPath, nonBranchingPaths);
 
         return nonBranchingPaths;
