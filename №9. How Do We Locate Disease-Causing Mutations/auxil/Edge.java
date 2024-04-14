@@ -10,8 +10,12 @@ public class Edge {
         this.position = position;
     }
 
-    public char getLabel() {
+    public int getLabel() {
         return label;
+    }
+
+    public int getPosition() {
+        return position;
     }
 
     @Override
