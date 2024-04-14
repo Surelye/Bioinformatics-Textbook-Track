@@ -2,7 +2,6 @@ import auxil.MSuffixTrie;
 import auxil.Node;
 import auxil.Edge;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -41,7 +40,7 @@ public class BA9UTIL {
                 currentNode.setPosition(i);
             }
         }
-        System.out.println(trie);
+        
         return trie;
     }
 }
