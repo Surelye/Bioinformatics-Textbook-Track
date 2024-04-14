@@ -16,6 +16,16 @@ public class Node {
         this.position = position;
     }
 
+    public boolean isProper() {
+        return index != -1;
+    }
+
+    @Override
+    public String toString() {
+        return "Node{index=%d, position=%d}"
+                .formatted(index, position);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -26,16 +36,6 @@ public class Node {
 
     @Override
     public int hashCode() {
-        return Objects.hash(index, position);
-    }
-
-    public boolean isProper() {
-        return index != -1;
-    }
-
-    @Override
-    public String toString() {
-        return "Node{index=%d, position=%d}"
-                .formatted(index, position);
+        return Objects.hash(index);
     }
 }
