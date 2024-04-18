@@ -2,6 +2,10 @@ import auxil.MSuffixTrie;
 import auxil.Node;
 import auxil.Edge;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -40,7 +44,36 @@ public class BA9UTIL {
                 currentNode.setPosition(i);
             }
         }
-        
+
         return trie;
+    }
+
+    public static List<Integer> constructLCP(String str, List<Integer> suf) {
+        int n = str.length();
+        int[] lcp = new int[n], pos = new int[n];
+        for (int i = 0; i != n; ++i) {
+            pos[suf.get(i)] = i;
+        }
+        int k = 0;
+
+        for (int i = 0; i != n; ++i) {
+            if (k > 0) {
+                --k;
+            }
+            if (pos[i] == n - 1) {
+                lcp[n - 1] = -1;
+                k = 0;
+            } else {
+                int j = suf.get(pos[i] + 1);
+                while (Math.max(i + k, j + k) < n && str.charAt(i + k) == str.charAt(j + k)) {
+                    ++k;
+                }
+                lcp[pos[i]] = k;
+            }
+        }
+
+        return Arrays.stream(lcp)
+                .boxed()
+                .toList();
     }
 }
