@@ -31,13 +31,71 @@
 // TATCGTT
 // -------------
 
+import auxil.Suffix;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 public class BA9D {
 
-    private void run() {
+    private static String findLongestRepeatMachinery(String str) {
+        int strLen = str.length();
+        List<Suffix> suffixes = new ArrayList<>(strLen);
+        for (int i = 0; i != strLen - 1; ++i) {
+            suffixes.add(
+                    new Suffix(str.substring(i), i)
+            );
+        }
+        suffixes.sort(Comparator.comparing(Suffix::suffix));
+        suffixes.addFirst(new Suffix("$", strLen - 1));
+        List<Integer> lcp = BA9UTIL.constructLCP(
+                str,
+                suffixes.stream().map(Suffix::position).toList()
+        );
+        int max = Integer.MIN_VALUE, indexMax = 0;
+        for (int i = 0; i != strLen; ++i) {
+            if (lcp.get(i) > max) {
+                max = lcp.get(i);
+                indexMax = i;
+            }
+        }
 
+        return suffixes
+                .get(indexMax)
+                .suffix()
+                .substring(0, lcp.get(indexMax));
+    }
+
+    public static String findLongestRepeat(String str) {
+        return findLongestRepeatMachinery(str);
+    }
+
+    public static String findLongestRepeat(Path path) {
+        String str = UTIL.readDataset(path).getFirst();
+        return findLongestRepeatMachinery(str);
+    }
+
+    private void run() {
+        String longestRepeat = findLongestRepeat(
+                Path.of(
+                        "/home/surelye/Downloads/rosalind_files/rosalind_ba9d.txt"
+                )
+        );
+
+        try (FileWriter fileWriter = new FileWriter("ba9d_out.txt")) {
+            fileWriter.write("%s\n".formatted(
+                    longestRepeat
+            ));
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
-
+        new BA9D().run();
     }
 }
