@@ -2,14 +2,34 @@ import auxil.MSuffixTrie;
 import auxil.Node;
 import auxil.Edge;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 public class BA9UTIL {
+
+    public enum Color {
+        GRAY,
+        RED {
+            @Override
+            public String toString() {
+                return "red";
+            }
+        },
+        BLUE {
+            @Override
+            public String toString() {
+                return "blue";
+            }
+        },
+        PURPLE {
+            @Override
+            public String toString() {
+                return "purple";
+            }
+        }
+    }
 
     public static <K, V> Stream<K> getKeysByValue(Map<K, V> map, V value) {
         return map
