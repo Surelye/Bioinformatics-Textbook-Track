@@ -96,4 +96,11 @@ public class BA9UTIL {
                 .boxed()
                 .toList();
     }
+
+    public static List<Integer> parseIntArray(String strIntArr, String regex) {
+        return Arrays.stream(strIntArr
+                        .split(regex))
+                .map(Integer::parseInt)
+                .toList();
+    }
 }
