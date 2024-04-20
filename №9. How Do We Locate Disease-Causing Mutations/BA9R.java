@@ -34,11 +34,12 @@
 // AGT$
 // -------------
 
-import auxil.Edge;
 import auxil.STNode;
 import auxil.STEdge;
 import auxil.SuffixTree;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -49,13 +50,13 @@ public class BA9R {
     ) {
         int index = 0, textLen = text.length(), desc;
         STNode root = new STNode(index++, 0, null);
-        SuffixTree st = new SuffixTree(root);
+        SuffixTree st = new SuffixTree(text, root);
         st.addEdge(
                 root,
                 new STNode(index++, textLen - 1, 1, root),
                 new STEdge(textLen - 1, 1)
         );
-        STNode rightmostNode, prevNode, newNode;
+        STNode rightmostNode, prevNode, newNode, newLeaf;
         STEdge newEdge;
 
         for (int i = 1; i != textLen; ++i) {
@@ -82,26 +83,30 @@ public class BA9R {
                             index++, rightmostNode.getDescent() + newEdge.length(),
                             rightmostNode
                     );
+                    st.addEdge(rightmostNode, newNode, newEdge);
                     assert prevNode != null;
                     prevNode.setParent(newNode);
                     st.addEdge(
                             newNode, prevNode,
                             new STEdge(
                                     suffixArray.get(i - 1) + lcp.get(i),
-                                    prevNode.getDescent() - lcp.get(i) - 1
+                                    prevNode.getDescent() - lcp.get(i)
                             )
                     );
+                    newLeaf = new STNode(
+                            index++,
+                            suffixArray.get(i),
+                            newNode.getDescent() + textLen - (suffixArray.get(i) + lcp.get(i)),
+                            newNode
+                    );
                     st.addEdge(
-                            newNode,
-                            new STNode(index++, suffixArray.get(i),
-                                    newNode.getDescent() + textLen - (suffixArray.get(i) + lcp.get(i)),
-                                    newNode
-                            ),
+                            newNode, newLeaf,
                             new STEdge(
                                     suffixArray.get(i) + lcp.get(i),
                                     textLen - (suffixArray.get(i) + lcp.get(i))
                             )
                     );
+                    st.setRightmostLeaf(newLeaf);
                     break;
                 } else {
                     prevNode = rightmostNode;
@@ -134,6 +139,21 @@ public class BA9R {
                         "/home/surelye/Downloads/rosalind_files/rosalind_ba9r.txt"
                 )
         );
+
+        try (FileWriter fileWriter = new FileWriter("ba9r_out.txt")) {
+            for (STNode node : st.keySet()) {
+                for (STEdge edge : st.get(node).values()) {
+                    fileWriter.write("%s\n".formatted(
+                            st.getText().substring(
+                                    edge.position(),
+                                    edge.position() + edge.length()
+                            )
+                    ));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
     }
 
     public static void main(String[] args) {
