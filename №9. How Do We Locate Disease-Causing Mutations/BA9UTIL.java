@@ -1,10 +1,12 @@
 import auxil.MSuffixTrie;
 import auxil.Node;
 import auxil.Edge;
+import auxil.Symbol;
+import com.sun.source.tree.BreakTree;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class BA9UTIL {
@@ -102,5 +104,37 @@ public class BA9UTIL {
                         .split(regex))
                 .map(Integer::parseInt)
                 .toList();
+    }
+
+    public static<T> void writeToFile(String filename, T elem) {
+        try (FileWriter fileWriter = new FileWriter(filename)) {
+            fileWriter.write("%s\n".formatted(elem));
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
+    }
+
+    public static Map<Integer, Integer> lastToFirst(String transform) {
+        int textLen = transform.length(), idx;
+        char cur;
+        String sfc = new String(transform.chars().sorted().toArray(), 0, textLen);
+        Map<Character, Integer> sm = new HashMap<>(), starts = new HashMap<>();
+        Map<Integer, Integer> lastToFirst = new HashMap<>();
+        for (int i = 0; i != textLen; ) {
+            cur = sfc.charAt(i);
+            sm.put(cur, 0);
+            starts.put(cur, i);
+            while (i < textLen && cur == sfc.charAt(i)) {
+                ++i;
+            }
+        }
+        for (int i = 0; i != textLen; ++i) {
+            cur = transform.charAt(i);
+            idx = starts.get(cur) + sm.get(cur);
+            lastToFirst.put(i, idx);
+            sm.put(cur, sm.get(cur) + 1);
+        }
+
+        return lastToFirst;
     }
 }
