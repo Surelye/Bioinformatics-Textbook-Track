@@ -2,14 +2,26 @@ import auxil.MSuffixTrie;
 import auxil.Node;
 import auxil.Edge;
 import auxil.Symbol;
-import com.sun.source.tree.BreakTree;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 public class BA9UTIL {
+
+    public static final int POOL_SIZE = Runtime.getRuntime().availableProcessors();
+    public static final ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
 
     public enum Color {
         GRAY,
@@ -114,10 +126,20 @@ public class BA9UTIL {
         }
     }
 
-    public static Map<Integer, Integer> lastToFirst(String transform) {
+    public static<T> void writeToFile(String filename, List<T> elems, String sep) {
+        try (FileWriter fileWriter = new FileWriter(filename)) {
+            int eSize = elems.size();
+            for (int i = 0; i != eSize; ++i) {
+                fileWriter.write("%s%s".formatted(elems.get(i), (i == eSize - 1) ? "\n" : sep));
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+        }
+    }
+
+    public static Map<Integer, Integer> lastToFirst(String transform, String sfc) {
         int textLen = transform.length(), idx;
         char cur;
-        String sfc = new String(transform.chars().sorted().toArray(), 0, textLen);
         Map<Character, Integer> sm = new HashMap<>(), starts = new HashMap<>();
         Map<Integer, Integer> lastToFirst = new HashMap<>();
         for (int i = 0; i != textLen; ) {
@@ -136,5 +158,131 @@ public class BA9UTIL {
         }
 
         return lastToFirst;
+    }
+
+    public static Map<Integer, Integer> lastToFirst(String transform) {
+        return lastToFirst(
+                transform,
+                new String(transform.chars().sorted().toArray(), 0, transform.length())
+        );
+    }
+
+    public static Map<Character, List<Integer>> getCountArrays(String str) {
+        int strLen = str.length();
+        char cur;
+        List<Integer> curCount;
+        Map<Character, List<Integer>> count = new HashMap<>();
+        for (int i = 0; i != strLen; ++i) {
+            cur = str.charAt(i);
+            if (count.containsKey(cur)) {
+                curCount = count.get(cur);
+                curCount.addAll(
+                        Collections.nCopies(
+                                i + 1 - curCount.size(),
+                                curCount.getLast()
+                        )
+                );
+                curCount.add(curCount.getLast() + 1);
+            } else {
+                count.put(cur, new ArrayList<>(Collections.nCopies(i + 1, 0)));
+                count.get(cur).add(1);
+            }
+        }
+        for (char symbol : count.keySet()) {
+            curCount = count.get(symbol);
+            curCount.addAll(
+                    Collections.nCopies(
+                            strLen + 1 - curCount.size(),
+                            curCount.getLast()
+                    )
+            );
+        }
+
+        return count;
+    }
+
+    public static String getFirstColumn(String text) {
+        return new String(text.chars().sorted().toArray(), 0, text.length());
+    }
+
+    public static Map<Character, Integer> getFirstOccurrence(String text, boolean isSorted) {
+        int strLen = text.length();
+        char cur;
+        String fc;
+        if (isSorted) {
+            fc = text;
+        } else {
+            fc = getFirstColumn(text);
+        }
+        Map<Character, Integer> firstOccurrence = new HashMap<>();
+        for (int i = 0; i != strLen; ) {
+            cur = fc.charAt(i);
+            firstOccurrence.put(cur, i);
+            while (i < strLen && cur == fc.charAt(i)) {
+                ++i;
+            }
+        }
+
+        return firstOccurrence;
+    }
+
+    public static Map<Character, Integer> getFirstOccurrence(String text) {
+        return getFirstOccurrence(text, false);
+    }
+
+    public static Map<Character, List<Integer>> getCheckpointArrays(String str, int C) {
+        int li = str.length(), nEls = li / C + 1;
+        Map<Character, List<Integer>> countArrays = getCountArrays(str);
+        List<Integer> checkPointArray, curCount;
+        Map<Character, List<Integer>> checkpointArrays = new HashMap<>();
+        for (char symbol : countArrays.keySet()) {
+            checkPointArray = new ArrayList<>(nEls);
+            curCount = countArrays.get(symbol);
+            for (int i = 0; i <= li; i += C) {
+                checkPointArray.add(curCount.get(i));
+            }
+            checkpointArrays.put(symbol, checkPointArray);
+        }
+
+        return checkpointArrays;
+    }
+
+    public static List<Symbol> stringToSymbolList(String str) {
+        int strLen = str.length();
+        char chr;
+        Map<Character, Integer> occs = new HashMap<>();
+        List<Symbol> sl = new ArrayList<>();
+        for (int i = 0; i != strLen; ++i) {
+            chr = str.charAt(i);
+            if (occs.containsKey(chr)) {
+                sl.add(new Symbol(chr, occs.get(chr)));
+                occs.put(chr, occs.get(chr) + 1);
+            } else {
+                sl.add(new Symbol(chr, 1));
+                occs.put(chr, 2);
+            }
+        }
+        return sl;
+    }
+
+    public static<T> List<T> getFutureResults(List<Callable<T>> tasks) {
+        List<T> results = new ArrayList<>(tasks.size());
+
+        try {
+            List<Future<T>> futureResults = executor.invokeAll(tasks);
+            executor.shutdown();
+            for (Future<T> futureResult : futureResults) {
+                T result = futureResult.get();
+                results.add(result);
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Thread was interrupted");
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            System.out.println("Failed to execute task");
+            e.printStackTrace();
+        }
+
+        return results;
     }
 }
