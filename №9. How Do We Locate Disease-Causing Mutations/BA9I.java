@@ -35,14 +35,46 @@
 // ACTGGCT$TGCGGC
 // -------------
 
+import auxil.Symbol;
+
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BA9I {
 
-    private static String BWTMachinery(String text) {
-        int textLength = text.length();
+    private static List<Symbol> SBWTMachinery(String text, List<Integer> suffixArray) {
+        int textLen = text.length();
+        char chr;
+        String BWT = BWTMachinery(text, suffixArray);
+        Map<Character, Integer> occs = new HashMap<>();
+        List<Symbol> SBWT = new ArrayList<>(textLen);
+        for (int i = 0; i != textLen; ++i) {
+            chr = BWT.charAt(i);
+            if (occs.containsKey(chr)) {
+                SBWT.add(new Symbol(chr, occs.get(chr)));
+                occs.put(chr, occs.get(chr) + 1);
+            } else {
+                SBWT.add(new Symbol(chr, 1));
+                occs.put(chr, 2);
+            }
+        }
+        return SBWT;
+    }
+
+    public static List<Symbol> SBWT(String text, List<Integer> suffixArray) {
+        return SBWTMachinery(text, suffixArray);
+    }
+
+    public static List<Symbol> SBWT(String text) {
         List<Integer> suffixArray = BA9G.constructSuffixArray(text);
+        return SBWTMachinery(text, suffixArray);
+    }
+
+    private static String BWTMachinery(String text, List<Integer> suffixArray) {
+        int textLength = text.length();
         StringBuilder transformed = new StringBuilder(textLength);
         transformed.append(text.charAt(textLength - 2));
 
@@ -57,12 +89,19 @@ public class BA9I {
         return transformed.toString();
     }
 
+    public static String BWT(String text, List<Integer> suffixArray) {
+        return BWTMachinery(text, suffixArray);
+    }
+
     public static String BWT(String text) {
-        return BWTMachinery(text);
+        List<Integer> suffixArray = BA9G.constructSuffixArray(text);
+        return BWTMachinery(text, suffixArray);
     }
 
     public static String BWT(Path path) {
-        return BWTMachinery(UTIL.readDataset(path).getFirst());
+        String text = UTIL.readDataset(path).getFirst();
+        List<Integer> suffixArray = BA9G.constructSuffixArray(text);
+        return BWTMachinery(text, suffixArray);
     }
 
     private void run() {
