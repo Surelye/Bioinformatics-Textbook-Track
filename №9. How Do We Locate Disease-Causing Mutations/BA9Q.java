@@ -27,6 +27,8 @@
 // 12,0
 // -------------
 
+import auxil.Symbol;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -36,9 +38,10 @@ import java.util.Map;
 
 public class BA9Q {
 
-    private static Map<Integer, Integer> constructPartialSuffixArrayMachinery(String text, int K) {
-        List<Integer> suffixArray = BA9G.constructSuffixArray(text);
-        int textLength = text.length();
+    private static Map<Integer, Integer> constructPartialSuffixArrayMachinery(
+            List<Integer> suffixArray, int K
+    ) {
+        int textLength = suffixArray.size();
         Map<Integer, Integer> partialSuffixArray = new HashMap<>();
         for (int i = 0; i != textLength; ++i) {
             if (suffixArray.get(i) % K == 0) {
@@ -49,16 +52,54 @@ public class BA9Q {
         return partialSuffixArray;
     }
 
+    public static Map<Integer, Integer> constructPartialSuffixArray(
+            List<Integer> suffixArray, int K
+    ) {
+        return constructPartialSuffixArrayMachinery(suffixArray, K);
+    }
+
     public static Map<Integer, Integer> constructPartialSuffixArray(String text, int K) {
-        return constructPartialSuffixArrayMachinery(text, K);
+        List<Integer> suffixArray = BA9G.constructSuffixArray(text);
+        return constructPartialSuffixArrayMachinery(suffixArray, K);
     }
 
     public static Map<Integer, Integer> constructPartialSuffixArray(Path path) {
         List<String> strDataset = UTIL.readDataset(path);
+        List<Integer> suffixArray = BA9G.constructSuffixArray(strDataset.getFirst());
         return constructPartialSuffixArrayMachinery(
-                strDataset.getFirst(),
+                suffixArray,
                 Integer.parseInt(strDataset.getLast())
         );
+    }
+
+    private static Map<Symbol, Integer> constructPartialSuffixArrayMachinery(
+            String text, List<Integer> suffixArray, Map<Character, Integer> firstOccurrence, int K
+    ) {
+        int textLen = text.length();
+        Map<Symbol, Integer> psa = new HashMap<>();
+        for (int i = 0; i != textLen; ++i) {
+            if (suffixArray.get(i) % K == 0) {
+                Symbol symbol = new Symbol(
+                        text.charAt(suffixArray.get(i)),
+                        i - firstOccurrence.get(text.charAt(suffixArray.get(i))) + 1
+                );
+                psa.put(symbol, suffixArray.get(i));
+            }
+        }
+        return psa;
+    }
+
+    public static Map<Symbol, Integer> constructPartialSuffixArray(
+            String text, List<Integer> suffixArray, Map<Character, Integer> firstOccurrence, int K
+    ) {
+        return constructPartialSuffixArrayMachinery(text, suffixArray, firstOccurrence, K);
+    }
+
+    public static Map<Symbol, Integer> constructPartialSuffixArray(
+            String text, Map<Character, Integer> firstOccurrence, int K
+    ) {
+        List<Integer> suffixArray = BA9G.constructSuffixArray(text);
+        return constructPartialSuffixArrayMachinery(text, suffixArray, firstOccurrence, K);
     }
 
     private void run() {
