@@ -34,7 +34,6 @@
 import auxil.HMM;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
