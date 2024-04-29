@@ -59,9 +59,20 @@ import auxil.PathNode;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BA10E {
+
+    private static int pathNodeToIndex(PathNode pn) {
+        return switch (pn.nodeType()) {
+            case s -> 0;
+            case M -> 3 * pn.index() - 1;
+            case D -> 3 * pn.index();
+            case I -> 3 * pn.index() + 1;
+            case e -> 3 * pn.index() + 2;
+        };
+    }
 
     private static List<Integer> getShadedColumns(List<String> alignment, double threshold) {
         int alSize = alignment.size(), strLen = alignment.getFirst().length();
@@ -82,76 +93,119 @@ public class BA10E {
         return shadedColumns;
     }
 
-//    public static List<String> getSeedAlignment(
-//            List<String> alignment, List<Integer> shadedColumns
-//    ) {
-//        int strLen = alignment.getFirst().length(), scSize = shadedColumns.size(), scPointer;
-//        StringBuilder seedStr = new StringBuilder(strLen - scSize);
-//        List<String> seedAlignment = new ArrayList<>(alignment.size());
-//
-//        for (String str : alignment) {
-//            scPointer = 0;
-//            seedStr.delete(0, seedStr.length());
-//            for (int i = 0; i != strLen; ++i) {
-//                if (i == shadedColumns.get(scPointer)) {
-//                    ++scPointer;
-//                    if (!(scPointer < scSize)) {
-//                        seedStr.append(str.substring(i + 1));
-//                        seedAlignment.add(seedStr.toString());
-//                        break;
-//                    }
-//                } else {
-//                    seedStr.append(str.charAt(i));
-//                }
-//            }
-//        }
-//
-//        return seedAlignment;
-//    }
+    private static auxil.Path getPathIfNoShadedColumns(String str) {
+        auxil.Path path = new auxil.Path();
+        PathNode pathNode;
 
-//    private static void updateTransitionProbabilities(
-//            double[][] transitionProbabilities, String str, List<Integer> shadedColumns
-//    ) {
-//        char prev, cur;
-//        if (shadedColumns.isEmpty()) {
-//            cur = str.charAt(0);
-//            ++transitionProbabilities[0][(cur == '-') ? 3 : 2];
-//            for (int i = 1; i != str.length() - 1; ++i) {
-//                prev = cur;
-//                cur = str.charAt(i);
-//                if (prev == '-') {
-//                    ++transitionProbabilities[3 * i][3 * (i + 1) - ((cur == '-') ? 0 : 1)];
-//                } else {
-//                    ++transitionProbabilities[3 * i - 1][3 * (i + 1) - ((cur == '-') ? 0 : 1)];
-//                }
-//            }
-//            cur = str.charAt(str.length() - 1);
-//            ++transitionProbabilities[3 * str.length() - ((cur == '-') ? 0 : 1)][3 * str.length() + 2];
-//            return;
-//        }
-//
-//        int scPointer = 0;
-//    }
+        for (int i = 0; i != str.length(); ++i) {
+            if (str.charAt(i) == '-') {
+                pathNode = new PathNode(PathNode.NodeType.D, i + 1);
+            } else {
+                pathNode = new PathNode(PathNode.NodeType.M, i + 1);
+            }
+            path.addNode(pathNode);
+        }
+        path.addNode(new PathNode(PathNode.NodeType.e, str.length()));
+
+        return path;
+    }
 
     private static auxil.Path getPathFromString(String str, List<Integer> sc) {
         auxil.Path path = new auxil.Path();
         PathNode pathNode;
 
         if (sc.isEmpty()) {
-            for (int i = 0; i != str.length(); ++i) {
+            return getPathIfNoShadedColumns(str);
+        }
+
+        int scPtr = 0;
+        for (int i = 0; i < str.length(); ++i) {
+            if (i == sc.get(scPtr)) {
+                ++scPtr;
+                if (str.charAt(i) != '-') {
+                    pathNode = new PathNode(PathNode.NodeType.I, i - scPtr + 1);
+                    path.addNode(pathNode);
+                }
+                while (scPtr < sc.size()) {
+                    if (sc.get(scPtr).equals(sc.get(scPtr - 1) + 1)) {
+                        if (str.charAt(sc.get(scPtr)) != '-') {
+                            pathNode = new PathNode(PathNode.NodeType.I, sc.get(scPtr) - scPtr);
+                            path.addNode(pathNode);
+                        }
+                        ++scPtr;
+                    } else {
+                        i = i + scPtr - 1;
+                        break;
+                    }
+                }
+            } else {
                 if (str.charAt(i) == '-') {
-                    pathNode = new PathNode(PathNode.NodeType.D, i + 1);
+                    pathNode = new PathNode(PathNode.NodeType.D, i + 1 - scPtr);
                     path.addNode(pathNode);
                 } else {
-                    pathNode = new PathNode(PathNode.NodeType.M, i + 1);
+                    pathNode = new PathNode(PathNode.NodeType.M, i + 1 - scPtr);
                     path.addNode(pathNode);
                 }
             }
-            path.addNode(new PathNode(PathNode.NodeType.e, 0));
-            return path;
+        }
+        path.addNode(new PathNode(PathNode.NodeType.e, str.length() - sc.size()));
+
+        return path;
+    }
+
+    private static void updateTransitionProbabilities(double[][] tps, auxil.Path path) {
+        PathNode cur = path.getNthNode(0), prev;
+
+        for (int i = 1; i != path.size(); ++i) {
+            prev = cur;
+            cur = path.getNthNode(i);
+            ++tps[pathNodeToIndex(prev)][pathNodeToIndex(cur)];
+        }
+    }
+
+    private static void reduceTransitionProbabilities(double[][] tps) {
+        int numSteps = tps.length / 3 - 2, start, end;
+        double rowSum;
+
+        for (int i = 0; i != 2; ++i) {
+            rowSum = 0;
+            for (int j = 1; j != 4; ++j) {
+                rowSum += tps[i][j];
+            }
+            if (!(rowSum < 10e-9)) {
+                for (int j = 1; j != 4; ++j) {
+                    tps[i][j] /= rowSum;
+                }
+            }
         }
 
-        return new auxil.Path();
+        for (int i = 0; i != numSteps; ++i) {
+            start = 3 * (i + 1);
+            end = start + 3;
+            for (int j = start - 1; j != end - 1; ++j) {
+                rowSum = 0;
+                for (int k = start + 1; k != end + 1; ++k) {
+                    rowSum += tps[j][k];
+                }
+                if (!(rowSum < 10e-9)) {
+                    for (int k = start + 1; k != end + 1; ++k) {
+                        tps[j][k] /= rowSum;
+                    }
+                }
+            }
+        }
+
+        for (int i = 3 * numSteps + 2; i != tps.length - 1; ++i) {
+            rowSum = 0;
+            for (int j = tps.length - 2; j != tps.length; ++j) {
+                rowSum += tps[i][j];
+            }
+            if (!(rowSum < 10e-9)) {
+                for (int j = tps.length - 2; j != tps.length; ++j) {
+                    tps[i][j] /= rowSum;
+                }
+            }
+        }
     }
 
     public static void constructProfileHMMMachinery(
@@ -161,10 +215,13 @@ public class BA10E {
         int alignStrLen = alignment.getFirst().length(), seedStrLen = alignStrLen - sc.size();
         int numStates = 3 * seedStrLen + 3;
         double[][] transitionProbabilities = new double[numStates][numStates];
-        List<auxil.Path> paths = new ArrayList<>(alignment.size());
         for (String str : alignment) {
             auxil.Path path = getPathFromString(str, sc);
-            paths.add(path);
+            updateTransitionProbabilities(transitionProbabilities, path);
+        }
+        reduceTransitionProbabilities(transitionProbabilities);
+        for (double[] row : transitionProbabilities) {
+            System.out.println(Arrays.toString(row));
         }
     }
 
