@@ -395,6 +395,7 @@ public class BA10E {
         );
     }
 
+    @SuppressWarnings("CallToPrintStackTrace")
     private void run() {
         List<String> strDataset = UTIL.readDataset(
                 Path.of("/home/surelye/Downloads/rosalind_files/ba10/rosalind_ba10e.txt")
