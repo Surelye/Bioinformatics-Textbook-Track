@@ -156,38 +156,6 @@ public class BA10E {
         }
         path.addNode(new PathNode(PathNode.NodeType.e, str.length() - sc.size()));
 
-//        int scPtr = 0;
-//        for (int i = 0; i < str.length(); ++i) {
-//            if (i == sc.get(scPtr)) {
-//                ++scPtr;
-//                if (str.charAt(i) != '-') {
-//                    pathNode = new PathNode(PathNode.NodeType.I, i - scPtr + 1);
-//                    path.addNode(pathNode);
-//                }
-//                while (scPtr < sc.size()) {
-//                    if (sc.get(scPtr).equals(sc.get(scPtr - 1) + 1)) {
-//                        if (str.charAt(sc.get(scPtr)) != '-') {
-//                            pathNode = new PathNode(PathNode.NodeType.I, sc.get(scPtr) - scPtr);
-//                            path.addNode(pathNode);
-//                        }
-//                        ++scPtr;
-//                    } else {
-//                        i = i + scPtr - 1;
-//                        break;
-//                    }
-//                }
-//            } else {
-//                if (str.charAt(i) == '-') {
-//                    pathNode = new PathNode(PathNode.NodeType.D, i + 1 - scPtr);
-//                    path.addNode(pathNode);
-//                } else {
-//                    pathNode = new PathNode(PathNode.NodeType.M, i + 1 - scPtr);
-//                    path.addNode(pathNode);
-//                }
-//            }
-//        }
-//        path.addNode(new PathNode(PathNode.NodeType.e, str.length() - sc.size()));
-
         return path;
     }
 
@@ -251,55 +219,40 @@ public class BA10E {
 
     private static void updateEmissionProbabilities(
             List<List<Double>> emissionProbabilities, auxil.Path path,
-            String str, List<Integer> sc, Map<Character, Integer> alphabet
+            String str, Map<Character, Integer> alphabet
     ) {
-        int pathPtr = 1, strPtr = 0, nodeIdx, symbIdx;
+        int strPtr = 0, nodeIdx, symbIdx;
         char curSymbol;
         PathNode curPathNode;
-        while ()
 
-
-        while (pathPtr < path.size() - 1 && strPtr < str.length()) {
-            curPathNode = path.getNthNode(pathPtr);
+        for (int i = 1; i != path.size() - 1; ++i) {
+            curPathNode = path.getNthNode(i);
             curSymbol = str.charAt(strPtr);
-            if (curPathNode.nodeType() == PathNode.NodeType.I) {
-                if (curSymbol != '-') {
-                    nodeIdx = pathNodeToIndex(curPathNode);
-                    symbIdx = alphabet.get(curSymbol);
-                    emissionProbabilities.get(nodeIdx).set(
-                            symbIdx,
-                            emissionProbabilities.get(nodeIdx).get(symbIdx) + 1
-                    );
-                    ++pathPtr;
-                }
-                ++strPtr;
-                while (path.getNthNode(pathPtr).nodeType() == PathNode.NodeType.I) {
-                    curPathNode = path.getNthNode(pathPtr);
-                    curSymbol = str.charAt(strPtr);
-                    if (str.charAt(strPtr) != '-') {
-                        nodeIdx = pathNodeToIndex(curPathNode);
-                        symbIdx = alphabet.get(curSymbol);
-                        emissionProbabilities.get(nodeIdx).set(
-                                symbIdx,
-                                emissionProbabilities.get(nodeIdx).get(symbIdx) + 1
-                        );
-                        ++pathPtr;
-                    }
-                    ++strPtr;
-                }
-            } else {
-                while (strPtr < str.length() && curSymbol == '-') {
+            if (curPathNode.nodeType() == PathNode.NodeType.M) {
+                while (curSymbol == '-') {
                     curSymbol = str.charAt(++strPtr);
                 }
-                if (curSymbol != '-') {
-                    nodeIdx = pathNodeToIndex(curPathNode);
-                    symbIdx = alphabet.get(curSymbol);
-                    emissionProbabilities.get(nodeIdx).set(
-                            symbIdx,
-                            emissionProbabilities.get(nodeIdx).get(symbIdx) + 1
-                    );
+                nodeIdx = pathNodeToIndex(curPathNode);
+                symbIdx = alphabet.get(curSymbol);
+                emissionProbabilities.get(nodeIdx).set(
+                        symbIdx,
+                        emissionProbabilities.get(nodeIdx).get(symbIdx) + 1
+                );
+                ++strPtr;
+            } else if (curPathNode.nodeType() == PathNode.NodeType.D) {
+                ++strPtr;
+            } else if (curPathNode.nodeType() == PathNode.NodeType.I) {
+                if (curSymbol == '-') {
+                    while (curSymbol == '-') {
+                        curSymbol = str.charAt(++strPtr);
+                    }
                 }
-                ++pathPtr;
+                nodeIdx = pathNodeToIndex(curPathNode);
+                symbIdx = alphabet.get(curSymbol);
+                emissionProbabilities.get(nodeIdx).set(
+                        symbIdx,
+                        emissionProbabilities.get(nodeIdx).get(symbIdx) + 1
+                );
                 ++strPtr;
             }
         }
@@ -359,7 +312,7 @@ public class BA10E {
         for (int i = 3; i != cols; ++i) {
             fw.write(
                     indexToState(i) +
-                            "%d%s".formatted(i / 3, (i == cols - 1) ? "\tE\n" : "\t")
+                    "%d%s".formatted(i / 3, (i == cols - 1) ? "\tE\n" : "\t")
             );
         }
         for (int i = 0; i != 2; ++i) {
