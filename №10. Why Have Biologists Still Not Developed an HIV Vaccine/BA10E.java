@@ -57,10 +57,12 @@
 
 import auxil.PathNode;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class BA10E {
 
@@ -85,7 +87,7 @@ public class BA10E {
                     ++numSpaces;
                 }
             }
-            if ((double)numSpaces / alSize > threshold) {
+            if ((double) numSpaces / alSize > threshold) {
                 shadedColumns.add(i);
             }
         }
@@ -118,63 +120,102 @@ public class BA10E {
             return getPathIfNoShadedColumns(str);
         }
 
-        int scPtr = 0;
-        for (int i = 0; i < str.length(); ++i) {
-            if (i == sc.get(scPtr)) {
-                ++scPtr;
-                if (str.charAt(i) != '-') {
-                    pathNode = new PathNode(PathNode.NodeType.I, i - scPtr + 1);
-                    path.addNode(pathNode);
-                }
-                while (scPtr < sc.size()) {
-                    if (sc.get(scPtr).equals(sc.get(scPtr - 1) + 1)) {
+        int scPtr = 0, offset;
+        for (int i = 0; i != str.length(); ++i) {
+            if (scPtr < sc.size()) {
+                if (i == sc.get(scPtr)) {
+                    offset = 1;
+                    ++scPtr;
+                    if (str.charAt(i) != '-') {
+                        pathNode = new PathNode(PathNode.NodeType.I, i - scPtr + 1);
+                        path.addNode(pathNode);
+                    }
+                    while (scPtr < sc.size() && sc.get(scPtr).equals(sc.get(scPtr - 1) + 1)) {
                         if (str.charAt(sc.get(scPtr)) != '-') {
                             pathNode = new PathNode(PathNode.NodeType.I, sc.get(scPtr) - scPtr);
                             path.addNode(pathNode);
                         }
+                        ++offset;
                         ++scPtr;
-                    } else {
-                        i = i + scPtr - 1;
-                        break;
                     }
+                    i += (offset - 1);
+                } else {
+                    pathNode = new PathNode(
+                            (str.charAt(i) == '-') ? PathNode.NodeType.D : PathNode.NodeType.M,
+                            i - scPtr + 1
+                    );
+                    path.addNode(pathNode);
                 }
             } else {
-                if (str.charAt(i) == '-') {
-                    pathNode = new PathNode(PathNode.NodeType.D, i + 1 - scPtr);
-                    path.addNode(pathNode);
-                } else {
-                    pathNode = new PathNode(PathNode.NodeType.M, i + 1 - scPtr);
-                    path.addNode(pathNode);
-                }
+                pathNode = new PathNode(
+                        (str.charAt(i) == '-') ? PathNode.NodeType.D : PathNode.NodeType.M,
+                        i - scPtr + 1
+                );
+                path.addNode(pathNode);
             }
         }
         path.addNode(new PathNode(PathNode.NodeType.e, str.length() - sc.size()));
 
+//        int scPtr = 0;
+//        for (int i = 0; i < str.length(); ++i) {
+//            if (i == sc.get(scPtr)) {
+//                ++scPtr;
+//                if (str.charAt(i) != '-') {
+//                    pathNode = new PathNode(PathNode.NodeType.I, i - scPtr + 1);
+//                    path.addNode(pathNode);
+//                }
+//                while (scPtr < sc.size()) {
+//                    if (sc.get(scPtr).equals(sc.get(scPtr - 1) + 1)) {
+//                        if (str.charAt(sc.get(scPtr)) != '-') {
+//                            pathNode = new PathNode(PathNode.NodeType.I, sc.get(scPtr) - scPtr);
+//                            path.addNode(pathNode);
+//                        }
+//                        ++scPtr;
+//                    } else {
+//                        i = i + scPtr - 1;
+//                        break;
+//                    }
+//                }
+//            } else {
+//                if (str.charAt(i) == '-') {
+//                    pathNode = new PathNode(PathNode.NodeType.D, i + 1 - scPtr);
+//                    path.addNode(pathNode);
+//                } else {
+//                    pathNode = new PathNode(PathNode.NodeType.M, i + 1 - scPtr);
+//                    path.addNode(pathNode);
+//                }
+//            }
+//        }
+//        path.addNode(new PathNode(PathNode.NodeType.e, str.length() - sc.size()));
+
         return path;
     }
 
-    private static void updateTransitionProbabilities(double[][] tps, auxil.Path path) {
+    private static void updateTransitionProbabilities(List<List<Double>> tps, auxil.Path path) {
         PathNode cur = path.getNthNode(0), prev;
+        int prevIdx, curIdx;
 
         for (int i = 1; i != path.size(); ++i) {
             prev = cur;
             cur = path.getNthNode(i);
-            ++tps[pathNodeToIndex(prev)][pathNodeToIndex(cur)];
+            prevIdx = pathNodeToIndex(prev);
+            curIdx = pathNodeToIndex(cur);
+            tps.get(prevIdx).set(curIdx, tps.get(prevIdx).get(curIdx) + 1);
         }
     }
 
-    private static void reduceTransitionProbabilities(double[][] tps) {
-        int numSteps = tps.length / 3 - 2, start, end;
+    private static void reduceTransitionProbabilities(List<List<Double>> tps) {
+        int numSteps = tps.size() / 3 - 2, start, end;
         double rowSum;
 
         for (int i = 0; i != 2; ++i) {
             rowSum = 0;
             for (int j = 1; j != 4; ++j) {
-                rowSum += tps[i][j];
+                rowSum += tps.get(i).get(j);
             }
             if (!(rowSum < 10e-9)) {
                 for (int j = 1; j != 4; ++j) {
-                    tps[i][j] /= rowSum;
+                    tps.get(i).set(j, tps.get(i).get(j) / rowSum);
                 }
             }
         }
@@ -185,57 +226,216 @@ public class BA10E {
             for (int j = start - 1; j != end - 1; ++j) {
                 rowSum = 0;
                 for (int k = start + 1; k != end + 1; ++k) {
-                    rowSum += tps[j][k];
+                    rowSum += tps.get(j).get(k);
                 }
                 if (!(rowSum < 10e-9)) {
                     for (int k = start + 1; k != end + 1; ++k) {
-                        tps[j][k] /= rowSum;
+                        tps.get(j).set(k, tps.get(j).get(k) / rowSum);
                     }
                 }
             }
         }
 
-        for (int i = 3 * numSteps + 2; i != tps.length - 1; ++i) {
+        for (int i = 3 * numSteps + 2; i != tps.size() - 1; ++i) {
             rowSum = 0;
-            for (int j = tps.length - 2; j != tps.length; ++j) {
-                rowSum += tps[i][j];
+            for (int j = tps.size() - 2; j != tps.size(); ++j) {
+                rowSum += tps.get(i).get(j);
             }
             if (!(rowSum < 10e-9)) {
-                for (int j = tps.length - 2; j != tps.length; ++j) {
-                    tps[i][j] /= rowSum;
+                for (int j = tps.size() - 2; j != tps.size(); ++j) {
+                    tps.get(i).set(j, tps.get(i).get(j) / rowSum);
                 }
             }
         }
     }
 
-    public static void constructProfileHMMMachinery(
-            double threshold, List<Character> alphabet, List<String> alignment
+    private static void updateEmissionProbabilities(
+            List<List<Double>> emissionProbabilities, auxil.Path path,
+            String str, List<Integer> sc, Map<Character, Integer> alphabet
+    ) {
+        int pathPtr = 1, strPtr = 0, nodeIdx, symbIdx;
+        char curSymbol;
+        PathNode curPathNode;
+        while ()
+
+
+        while (pathPtr < path.size() - 1 && strPtr < str.length()) {
+            curPathNode = path.getNthNode(pathPtr);
+            curSymbol = str.charAt(strPtr);
+            if (curPathNode.nodeType() == PathNode.NodeType.I) {
+                if (curSymbol != '-') {
+                    nodeIdx = pathNodeToIndex(curPathNode);
+                    symbIdx = alphabet.get(curSymbol);
+                    emissionProbabilities.get(nodeIdx).set(
+                            symbIdx,
+                            emissionProbabilities.get(nodeIdx).get(symbIdx) + 1
+                    );
+                    ++pathPtr;
+                }
+                ++strPtr;
+                while (path.getNthNode(pathPtr).nodeType() == PathNode.NodeType.I) {
+                    curPathNode = path.getNthNode(pathPtr);
+                    curSymbol = str.charAt(strPtr);
+                    if (str.charAt(strPtr) != '-') {
+                        nodeIdx = pathNodeToIndex(curPathNode);
+                        symbIdx = alphabet.get(curSymbol);
+                        emissionProbabilities.get(nodeIdx).set(
+                                symbIdx,
+                                emissionProbabilities.get(nodeIdx).get(symbIdx) + 1
+                        );
+                        ++pathPtr;
+                    }
+                    ++strPtr;
+                }
+            } else {
+                while (strPtr < str.length() && curSymbol == '-') {
+                    curSymbol = str.charAt(++strPtr);
+                }
+                if (curSymbol != '-') {
+                    nodeIdx = pathNodeToIndex(curPathNode);
+                    symbIdx = alphabet.get(curSymbol);
+                    emissionProbabilities.get(nodeIdx).set(
+                            symbIdx,
+                            emissionProbabilities.get(nodeIdx).get(symbIdx) + 1
+                    );
+                }
+                ++pathPtr;
+                ++strPtr;
+            }
+        }
+    }
+
+    private static void reduceEmissionProbabilities(List<List<Double>> emps) {
+        assert !emps.isEmpty();
+        int alSize = emps.getFirst().size();
+        double rowSum;
+
+        for (List<Double> row : emps) {
+            rowSum = 0;
+            for (int i = 0; i != alSize; ++i) {
+                rowSum += row.get(i);
+            }
+            if (!(rowSum < 10e-9)) {
+                for (int i = 0; i != alSize; ++i) {
+                    row.set(i, row.get(i) / rowSum);
+                }
+            }
+        }
+    }
+
+    public static Map.Entry<List<List<Double>>, List<List<Double>>> constructProfileHMMMachinery(
+            double threshold, Map<Character, Integer> alphabet, List<String> alignment
     ) {
         List<Integer> sc = getShadedColumns(alignment, threshold);
         int alignStrLen = alignment.getFirst().length(), seedStrLen = alignStrLen - sc.size();
         int numStates = 3 * seedStrLen + 3;
-        double[][] transitionProbabilities = new double[numStates][numStates];
-        for (String str : alignment) {
-            auxil.Path path = getPathFromString(str, sc);
+        List<List<Double>> transitionProbabilities = BA10UTIL.initDoubleMatrix(numStates);
+        List<List<Double>> emissionProbabilities = BA10UTIL.initDoubleMatrix(numStates, alphabet.size());
+        for (int i = 0; i != alignment.size(); ++i) {
+            auxil.Path path = getPathFromString(alignment.get(i), sc);
             updateTransitionProbabilities(transitionProbabilities, path);
+            updateEmissionProbabilities(emissionProbabilities, path, alignment.get(i), alphabet);
         }
         reduceTransitionProbabilities(transitionProbabilities);
-        for (double[] row : transitionProbabilities) {
-            System.out.println(Arrays.toString(row));
+        reduceEmissionProbabilities(emissionProbabilities);
+
+        return Map.entry(transitionProbabilities, emissionProbabilities);
+    }
+
+    private String indexToState(int i) {
+        return switch (i % 3) {
+            case 0 -> "M";
+            case 1 -> "D";
+            case 2 -> "I";
+            default -> throw new IllegalStateException("Unexpected value: " + i % 3);
+        };
+    }
+
+    private void writeTransitionMatrixToFile(
+            List<List<Double>> transitionMatrix, FileWriter fw
+    ) throws IOException {
+        int cols = transitionMatrix.size();
+        fw.write("S\tI0\t");
+        for (int i = 3; i != cols; ++i) {
+            fw.write(
+                    indexToState(i) +
+                            "%d%s".formatted(i / 3, (i == cols - 1) ? "\tE\n" : "\t")
+            );
+        }
+        for (int i = 0; i != 2; ++i) {
+            fw.write("%s\t".formatted((i == 0) ? "S" : "I0"));
+            for (int j = 0; j != cols; ++j) {
+                fw.write("%.3f%c".formatted(
+                        transitionMatrix.get(i).get(j),
+                        (j == cols - 1) ? '\n' : '\t'
+                ));
+            }
+        }
+        for (int i = 3; i != cols; ++i) {
+            fw.write("%s%d\t".formatted(indexToState(i), i / 3));
+            for (int j = 0; j != cols; ++j) {
+                fw.write("%.3f%c".formatted(
+                        transitionMatrix.get(i - 1).get(j),
+                        (j == cols - 1) ? '\n' : '\t'
+                ));
+            }
+        }
+        fw.write("E\t");
+        for (int j = 0; j != cols; ++j) {
+            fw.write("%.3f%c".formatted(
+                    transitionMatrix.get(cols - 1).get(j),
+                    (j == cols - 1) ? '\n' : '\t'
+            ));
         }
     }
 
-    public static void constructProfileHMM(
-            double threshold, List<Character> alphabet, List<String> alignment
-    ) {
-        constructProfileHMMMachinery(threshold, alphabet, alignment);
+    private void writeEmissionMatrixToFile(
+            List<List<Double>> emissionMatrix, Map<Character, Integer> alphabet, FileWriter fw
+    ) throws IOException {
+        int rows = emissionMatrix.size(), alSize = alphabet.size();
+        List<Character> alphabetList = alphabet.keySet().stream().sorted().toList();
+        fw.write("\t");
+        for (int i = 0; i != alSize; ++i) {
+            fw.write("%c%c".formatted(alphabetList.get(i), (i == alSize - 1) ? '\n' : '\t'));
+        }
+        for (int i = 0; i != 2; ++i) {
+            fw.write("%s\t".formatted((i == 0) ? "S" : "I0"));
+            for (int j = 0; j != alSize; ++j) {
+                fw.write("%.3f%c".formatted(
+                        emissionMatrix.get(i).get(j),
+                        (j == alSize - 1) ? '\n' : '\t'
+                ));
+            }
+        }
+        for (int i = 3; i != rows; ++i) {
+            fw.write("%s%d\t".formatted(indexToState(i), i / 3));
+            for (int j = 0; j != alSize; ++j) {
+                fw.write("%.3f%c".formatted(
+                        emissionMatrix.get(i - 1).get(j),
+                        (j == alSize - 1) ? '\n' : '\t'
+                ));
+            }
+        }
+        fw.write("E\t");
+        for (int i = 0; i != alSize; ++i) {
+            fw.write("%.3f%c".formatted(
+                    emissionMatrix.get(rows - 1).get(i),
+                    (i == alSize - 1) ? '\n' : '\t'
+            ));
+        }
     }
 
-    public static void constructProfileHMM(Path path) {
+    public static Map.Entry<List<List<Double>>, List<List<Double>>> constructProfileHMM(
+            double threshold, Map<Character, Integer> alphabet, List<String> alignment
+    ) {
+        return constructProfileHMMMachinery(threshold, alphabet, alignment);
+    }
+
+    public static Map.Entry<List<List<Double>>, List<List<Double>>> constructProfileHMM(Path path) {
         List<String> strDataset = UTIL.readDataset(path);
         double threshold = Double.parseDouble(strDataset.getFirst());
-        List<Character> alphabet = BA10UTIL.parseCharacterArray(strDataset.get(2), "\\s+");
-        constructProfileHMMMachinery(
+        Map<Character, Integer> alphabet = BA10UTIL.parseCharacterArrayToMap(strDataset.get(2), "\\s+");
+        return constructProfileHMMMachinery(
                 threshold,
                 alphabet,
                 strDataset.subList(4, strDataset.size())
@@ -243,11 +443,23 @@ public class BA10E {
     }
 
     private void run() {
-        constructProfileHMM(
-                Path.of(
-                        "/home/surelye/Downloads/rosalind_files/ba10/rosalind_ba10e.txt"
-                )
+        List<String> strDataset = UTIL.readDataset(
+                Path.of("/home/surelye/Downloads/rosalind_files/ba10/rosalind_ba10e.txt")
         );
+        Map<Character, Integer> alphabet = BA10UTIL.parseCharacterArrayToMap(strDataset.get(2), "\\s+");
+        Map.Entry<List<List<Double>>, List<List<Double>>> matrices = constructProfileHMM(
+                Double.parseDouble(strDataset.getFirst()),
+                alphabet,
+                strDataset.subList(4, strDataset.size())
+        );
+        try (FileWriter fileWriter = new FileWriter("ba10e_out.txt")) {
+            writeTransitionMatrixToFile(matrices.getKey(), fileWriter);
+            fileWriter.write("%s\n".formatted(BA10UTIL.separator));
+            writeEmissionMatrixToFile(matrices.getValue(), alphabet, fileWriter);
+        } catch (IOException e) {
+            System.out.println("Failed to write to file");
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
