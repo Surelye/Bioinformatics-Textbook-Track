@@ -1,4 +1,5 @@
 import auxil.HMM;
+import auxil.PathNode;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,7 +13,81 @@ import java.util.stream.IntStream;
 
 public class BA10UTIL {
 
+    public static final double EPS = 1e-9;
     public static final String separator = "--------";
+
+    public static int pathNodeToIndex(PathNode pn) {
+        return switch (pn.nodeType()) {
+            case s -> 0;
+            case M -> 3 * pn.index() - 1;
+            case D -> 3 * pn.index();
+            case I -> 3 * pn.index() + 1;
+            case e -> 3 * pn.index() + 2;
+        };
+    }
+
+    public static String indexToState(int i) {
+        return switch (i % 3) {
+            case 0 -> "M";
+            case 1 -> "D";
+            case 2 -> "I";
+            default -> throw new IllegalStateException("Unexpected value: " + i % 3);
+        };
+    }
+
+    public static List<Integer> getShadedColumns(List<String> alignment, double threshold) {
+        int alSize = alignment.size(), strLen = alignment.getFirst().length();
+        List<Integer> shadedColumns = new ArrayList<>(strLen);
+
+        for (int i = 0; i != strLen; ++i) {
+            int numSpaces = 0;
+            for (int j = 0; j != alSize; ++j) {
+                if (alignment.get(j).charAt(i) == '-') {
+                    ++numSpaces;
+                }
+            }
+            if ((double) numSpaces / alSize > threshold) {
+                shadedColumns.add(i);
+            }
+        }
+
+        return shadedColumns;
+    }
+
+    public static auxil.Path getPathFromString(String str, List<Integer> sc) {
+        auxil.Path path = new auxil.Path();
+        PathNode pathNode;
+
+        int scPtr = 0, offset;
+        for (int i = 0; i != str.length(); ++i) {
+            if (scPtr < sc.size() && i == sc.get(scPtr)) {
+                offset = 1;
+                ++scPtr;
+                if (str.charAt(i) != '-') {
+                    pathNode = new PathNode(PathNode.NodeType.I, i - scPtr + 1);
+                    path.addNode(pathNode);
+                }
+                while (scPtr < sc.size() && sc.get(scPtr).equals(sc.get(scPtr - 1) + 1)) {
+                    if (str.charAt(sc.get(scPtr)) != '-') {
+                        pathNode = new PathNode(PathNode.NodeType.I, sc.get(scPtr) - scPtr);
+                        path.addNode(pathNode);
+                    }
+                    ++offset;
+                    ++scPtr;
+                }
+                i += (offset - 1);
+            } else {
+                pathNode = new PathNode(
+                        (str.charAt(i) == '-') ? PathNode.NodeType.D : PathNode.NodeType.M,
+                        i - scPtr + 1
+                );
+                path.addNode(pathNode);
+            }
+        }
+        path.addNode(new PathNode(PathNode.NodeType.e, str.length() - sc.size()));
+
+        return path;
+    }
 
     public static List<List<Double>> initDoubleMatrix(int fDim, int sDim) {
         List<List<Double>> dMat = new ArrayList<>(fDim);
