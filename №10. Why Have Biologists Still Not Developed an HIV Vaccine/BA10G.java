@@ -1,0 +1,38 @@
+// Perform a Multiple Sequence Alignment with a Profile HMM
+// --------------------------------------------------------
+//
+// Sequence Alignment with Profile HMM Problem
+//
+// Given: A string Text, a multiple alignment `Alignment`, a threshold θ, and a pseudocount σ.
+//
+// Return: An optimal hidden path emitting Text in HMM(Alignment,θ,σ).
+//
+// Sample Dataset
+// AEFDFDC
+// --------
+// 0.4 0.01
+// --------
+// A   B   C   D   E   F
+// --------
+// ACDEFACADF
+// AFDA---CCF
+// A--EFD-FDC
+// ACAEF--A-C
+// ADDEFAAADF
+// --------------
+//
+// Sample Output
+// -------------
+// M1 D2 D3 M4 M5 I5 M6 M7 M8
+// -------------
+
+public class BA10G {
+
+    private void run() {
+
+    }
+
+    public static void main(String[] args) {
+        new BA10G().run();
+    }
+}
