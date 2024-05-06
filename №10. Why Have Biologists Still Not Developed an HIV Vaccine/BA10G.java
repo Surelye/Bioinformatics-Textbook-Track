@@ -26,7 +26,13 @@
 // M1 D2 D3 M4 M5 I5 M6 M7 M8
 // -------------
 
+import auxil.Path;
+
 public class BA10G {
+
+    public void HmmMultipleSequenceAlignment(Path path) {
+
+    }
 
     private void run() {
 
