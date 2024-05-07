@@ -255,7 +255,7 @@ public class BA10F {
         writeMatrixToFile(emissionMatrix, emissionMatrix.size(), alSize, fw);
     }
 
-    public static Map.Entry<List<List<Double>>, List<List<Double>>> constructProfileHMMWithPseudocountsMachinery(
+    private static Map.Entry<List<List<Double>>, List<List<Double>>> constructProfileHMMWithPseudocountsMachinery(
             double threshold, double pseudocount, Map<Character, Integer> alphabet, List<String> alignment
     ) {
         List<Integer> sc = BA10UTIL.getShadedColumns(alignment, threshold);
