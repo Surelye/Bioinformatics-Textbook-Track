@@ -223,7 +223,7 @@ public class BA10E {
         writeMatrixToFile(emissionMatrix, emissionMatrix.size(), alSize, fw);
     }
 
-    public static Map.Entry<List<List<Double>>, List<List<Double>>> constructProfileHMMMachinery(
+    private static Map.Entry<List<List<Double>>, List<List<Double>>> constructProfileHMMMachinery(
             double threshold, Map<Character, Integer> alphabet, List<String> alignment
     ) {
         List<Integer> sc = BA10UTIL.getShadedColumns(alignment, threshold);
