@@ -202,59 +202,6 @@ public class BA10F {
         }
     }
 
-    private void writeMatrixToFile(
-            List<List<Double>> mat, int dim1, int dim2, FileWriter fw
-    ) throws IOException {
-        for (int i = 0; i != 2; ++i) {
-            fw.write("%s\t".formatted((i == 0) ? "S" : "I0"));
-            for (int j = 0; j != dim2; ++j) {
-                fw.write("%.3f%c".formatted(
-                        mat.get(i).get(j),
-                        (j == dim2 - 1) ? '\n' : '\t'
-                ));
-            }
-        }
-        for (int i = 3; i != dim1; ++i) {
-            fw.write("%s%d\t".formatted(BA10UTIL.indexToState(i), i / 3));
-            for (int j = 0; j != dim2; ++j) {
-                fw.write("%.3f%c".formatted(
-                        mat.get(i - 1).get(j),
-                        (j == dim2 - 1) ? '\n' : '\t'
-                ));
-            }
-        }
-        fw.write("E\t");
-        for (int i = 0; i != dim2; ++i) {
-            fw.write("%.3f%c".formatted(
-                    mat.get(dim1 - 1).get(i),
-                    (i == dim2 - 1) ? '\n' : '\t'
-            ));
-        }
-    }
-
-    private void writeTransitionMatrixToFile(
-            List<List<Double>> transitionMatrix, FileWriter fw
-    ) throws IOException {
-        int cols = transitionMatrix.size();
-        fw.write("S\tI0\t");
-        for (int i = 3; i != cols; ++i) {
-            fw.write(BA10UTIL.indexToState(i) + "%d%s".formatted(i / 3, (i == cols - 1) ? "\tE\n" : "\t"));
-        }
-        writeMatrixToFile(transitionMatrix, cols, cols, fw);
-    }
-
-    private void writeEmissionMatrixToFile(
-            List<List<Double>> emissionMatrix, Map<Character, Integer> alphabet, FileWriter fw
-    ) throws IOException {
-        int alSize = alphabet.size();
-        List<Character> alphabetList = alphabet.keySet().stream().sorted().toList();
-        fw.write("\t");
-        for (int i = 0; i != alSize; ++i) {
-            fw.write("%c%c".formatted(alphabetList.get(i), (i == alSize - 1) ? '\n' : '\t'));
-        }
-        writeMatrixToFile(emissionMatrix, emissionMatrix.size(), alSize, fw);
-    }
-
     private static Map.Entry<List<List<Double>>, List<List<Double>>> constructProfileHMMWithPseudocountsMachinery(
             double threshold, double pseudocount, Map<Character, Integer> alphabet, List<String> alignment
     ) {
@@ -306,9 +253,9 @@ public class BA10F {
                 strDataset.subList(4, strDataset.size())
         );
         try (FileWriter fileWriter = new FileWriter("ba10f_out.txt")) {
-            writeTransitionMatrixToFile(matrices.getKey(), fileWriter);
+            BA10UTIL.writeTransitionMatrixToFile(matrices.getKey(), fileWriter);
             fileWriter.write("%s\n".formatted(BA10UTIL.separator));
-            writeEmissionMatrixToFile(matrices.getValue(), alphabet, fileWriter);
+            BA10UTIL.writeEmissionMatrixToFile(matrices.getValue(), alphabet, fileWriter);
         } catch (IOException e) {
             System.out.println("Failed to write to file");
             e.printStackTrace();
