@@ -46,7 +46,7 @@ public class BA10UTIL {
                     ++numSpaces;
                 }
             }
-            if ((double) numSpaces / alSize > threshold) {
+            if ((double) numSpaces / alSize >= threshold) {
                 shadedColumns.add(i);
             }
         }
@@ -130,6 +130,22 @@ public class BA10UTIL {
         return transition;
     }
 
+    public static List<List<Double>> parseParameterMatrix(List<String> strMat) {
+        int nRows = strMat.size(), nCols = strMat.getFirst().split("\\s+").length;
+        String strRow;
+        List<List<Double>> parameterMatrix = new ArrayList<>(nRows);
+        for (int i = 1; i != nRows; ++i) {
+            strRow = strMat.get(i).substring(1).strip();
+            parameterMatrix.add(
+                    Arrays.stream(strRow.split("\\s+"))
+                            .map(Double::parseDouble)
+                            .toList()
+            );
+        }
+
+        return parameterMatrix;
+    }
+
     public static Map<Character, Map<Character, Double>> parseEmissionMatrix(
             List<String> strMatrix, List<Character> states, List<Character> alphabet
     ) {
@@ -181,13 +197,106 @@ public class BA10UTIL {
         return new HMM(alphabet, states, transition, emission);
     }
 
+    public static <K, V> List<K> getOrderedListOfMapKeys(Map<K, V> map) {
+        return map.keySet().stream().sorted().toList();
+    }
+
+    public static Map<Character, Map<Character, Double>> parameterMatrixToParameterMap(
+            List<List<Double>> paramMat, List<Character> rowLabels, List<Character> colLabels
+    ) {
+        int nRows = rowLabels.size(), nCols = colLabels.size();
+        Map<Character, Map<Character, Double>> parameterMap = new HashMap<>(nRows);
+        for (int i = 0; i != nRows; ++i) {
+            parameterMap.put(rowLabels.get(i), new HashMap<>(nCols));
+            for (int j = 0; j != nCols; ++j) {
+                parameterMap.get(rowLabels.get(i)).put(colLabels.get(j), paramMat.get(i).get(j));
+            }
+        }
+        return parameterMap;
+    }
+
     @SuppressWarnings("CallToPrintStackTrace")
-    public static<T> void writeToFile(String filename, T e) {
+    public static <T> void writeToFile(String filename, T e) {
         try (FileWriter fileWriter = new FileWriter(filename)) {
             fileWriter.write("%s\n".formatted(e));
         } catch (IOException ioe) {
             System.out.println("Failed to write to file");
             ioe.printStackTrace();
+        }
+    }
+
+    private static void writeMatrixToFile(
+            List<List<Double>> mat, int dim1, int dim2, FileWriter fw
+    ) throws IOException {
+        for (int i = 0; i != 2; ++i) {
+            fw.write("%s\t".formatted((i == 0) ? "S" : "I0"));
+            for (int j = 0; j != dim2; ++j) {
+                fw.write("%.3f%c".formatted(
+                        mat.get(i).get(j),
+                        (j == dim2 - 1) ? '\n' : '\t'
+                ));
+            }
+        }
+        for (int i = 3; i != dim1; ++i) {
+            fw.write("%s%d\t".formatted(BA10UTIL.indexToState(i), i / 3));
+            for (int j = 0; j != dim2; ++j) {
+                fw.write("%.3f%c".formatted(
+                        mat.get(i - 1).get(j),
+                        (j == dim2 - 1) ? '\n' : '\t'
+                ));
+            }
+        }
+        fw.write("E\t");
+        for (int i = 0; i != dim2; ++i) {
+            fw.write("%.3f%c".formatted(
+                    mat.get(dim1 - 1).get(i),
+                    (i == dim2 - 1) ? '\n' : '\t'
+            ));
+        }
+    }
+
+    public static void writeTransitionMatrixToFile(
+            List<List<Double>> transitionMatrix, FileWriter fw
+    ) throws IOException {
+        int cols = transitionMatrix.size();
+        fw.write("S\tI0\t");
+        for (int i = 3; i != cols; ++i) {
+            fw.write(BA10UTIL.indexToState(i) + "%d%s".formatted(i / 3, (i == cols - 1) ? "\tE\n" : "\t"));
+        }
+        BA10UTIL.writeMatrixToFile(transitionMatrix, cols, cols, fw);
+    }
+
+    public static void writeEmissionMatrixToFile(
+            List<List<Double>> emissionMatrix, Map<Character, Integer> alphabet, FileWriter fw
+    ) throws IOException {
+        int alSize = alphabet.size();
+        List<Character> alphabetList = alphabet.keySet().stream().sorted().toList();
+        fw.write("\t");
+        for (int i = 0; i != alSize; ++i) {
+            fw.write("%c%c".formatted(alphabetList.get(i), (i == alSize - 1) ? '\n' : '\t'));
+        }
+        BA10UTIL.writeMatrixToFile(emissionMatrix, emissionMatrix.size(), alSize, fw);
+    }
+
+    public static void writeMatrixToFile(
+            List<List<Double>> mat, FileWriter fw, List<Character> rowLabels, List<Character> colLabels
+    ) throws IOException {
+        int nRows = rowLabels.size(), nCols = colLabels.size();
+
+        fw.write('\t');
+        for (int i = 0; i != nCols; ++i) {
+            fw.write("%c%c".formatted(
+                    colLabels.get(i), (i == nCols - 1) ? '\n' : '\t'
+            ));
+        }
+
+        for (int i = 0; i != nRows; ++i) {
+            fw.write("%c%c".formatted(rowLabels.get(i), '\t'));
+            for (int j = 0; j != nCols; ++j) {
+                fw.write("%.3f%c".formatted(
+                        mat.get(i).get(j), (j == nCols - 1) ? '\n' : '\t'
+                ));
+            }
         }
     }
 }
